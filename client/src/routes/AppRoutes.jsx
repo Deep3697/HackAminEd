@@ -1,58 +1,66 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import AppLayout from '../components/layout/AppLayout';
-import Login from '../pages/Auth/Login';
-import SalesDashboard from '../pages/Sales/SalesDashboard';
-import PurchaseDashboard from '../pages/Purchase/PurchaseDashboard';
-import ProductionDashboard from '../pages/Production/ProductionDashboard';
-import FinanceDashboard from '../pages/Finance/FinanceDashboard';
-import HRDashboard from '../pages/HR/HRDashboard';
-import LogisticsDashboard from '../pages/Logistics/LogisticsDashboard';
-import QualityDashboard from '../pages/Quality/QualityDashboard';
-import MaintenanceDashboard from '../pages/Maintenance/MaintenanceDashboard';
-import Settings from '../pages/Settings/Settings';
-import Dashboard from '../pages/Dashboard/Dashboard';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-const Placeholder = ({ title }) => (
-  <div className="flex items-center justify-center h-full min-h-[60vh]">
-    <h2 className="text-3xl font-bold text-slate-700 bg-clip-text text-transparent bg-gradient-to-r from-slate-500 to-slate-300">
-      {title} Module Integration Pending
-    </h2>
-  </div>
-);
+// Layouts
+import DashboardLayout from '../components/Layouts/DashboardLayout';
+
+// Pages
+import HomePage from '../pages/Public/HomePage';
+import Login from '../pages/Auth/Login';
+import AdminDashboard from '../pages/Admin/AdminDashboard';
+import UserManagement from '../pages/Admin/UserManagement';
+import UserDashboard from '../pages/User/UserDashboard';
+
+// Hubs
+import SalesHub from '../pages/Hubs/SalesHub';
+import PurchaseHub from '../pages/Hubs/PurchaseHub';
+import ProductionHub from '../pages/Hubs/ProductionHub';
+import FinanceHub from '../pages/Hubs/FinanceHub';
+import HRPayrollHub from '../pages/Hubs/HRPayrollHub';
+import LogisticsHub from '../pages/Hubs/LogisticsHub';
+import QualityHub from '../pages/Hubs/QualityHub';
+import MaintenanceHub from '../pages/Hubs/MaintenanceHub';
+import InventoryHub from '../pages/Hubs/InventoryHub';
+import AssetsHub from '../pages/Hubs/AssetsHub';
+import StatutoryHub from '../pages/Hubs/StatutoryHub';
+import SimulationHub from '../pages/Hubs/SimulationHub';
+import ReportsHub from '../pages/Hubs/ReportsHub';
 
 const AppRoutes = () => {
-  const location = useLocation();
+    return (
+        <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<Login />} />
 
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/login" element={<Login />} />
+            {/* Protected Routes inside DashboardLayout */}
+            <Route element={<DashboardLayout />}>
+                {/* Admin */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<UserManagement />} />
 
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="dashboard" element={<Placeholder title="Main Dashboard" />} />
-          <Route path="sales" element={<SalesDashboard />} />
-          <Route path="purchase" element={<PurchaseDashboard />} />
-          <Route path="production" element={<ProductionDashboard />} />
-          <Route path="finance" element={<FinanceDashboard />} />
-          <Route path="hr" element={<HRDashboard />} />
-          <Route path="logistics" element={<LogisticsDashboard />} />
-          <Route path="quality" element={<QualityDashboard />} />
-          <Route path="contractors" element={<Placeholder title="Contractors" />} />
-          <Route path="maintenance" element={<MaintenanceDashboard />} />
-          <Route path="warehouse" element={<Placeholder title="Warehouse" />} />
-          <Route path="assets" element={<Placeholder title="Assets" />} />
-          <Route path="statutory" element={<Placeholder title="Statutory" />} />
-          <Route path="simulation" element={<Placeholder title="Simulation" />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-        
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </AnimatePresence>
-  );
+                {/* User */}
+                <Route path="/dashboard" element={<UserDashboard />} />
+
+                {/* Hubs */}
+                <Route path="/sales" element={<SalesHub />} />
+                <Route path="/purchase" element={<PurchaseHub />} />
+                <Route path="/production" element={<ProductionHub />} />
+                <Route path="/finance" element={<FinanceHub />} />
+                <Route path="/hr-payroll" element={<HRPayrollHub />} />
+                <Route path="/logistics" element={<LogisticsHub />} />
+                <Route path="/quality" element={<QualityHub />} />
+                <Route path="/maintenance" element={<MaintenanceHub />} />
+                <Route path="/inventory" element={<InventoryHub />} />
+                <Route path="/assets" element={<AssetsHub />} />
+                <Route path="/statutory" element={<StatutoryHub />} />
+                <Route path="/simulation" element={<SimulationHub />} />
+                <Route path="/reports" element={<ReportsHub />} />
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+    );
 };
 
 export default AppRoutes;
