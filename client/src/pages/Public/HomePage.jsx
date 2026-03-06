@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // 1. Image Imports
 import slide1Image from '../../assets/slide-1.avif';
@@ -7,6 +8,11 @@ import slide3Image from '../../assets/slide-3.avif';
 
 const HomePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
+  
+  // NEW: State variables to control when the pop-ups show
+  const [showAbout, setShowAbout] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
 
   // 2. Slide Data
   const slides = [
@@ -44,8 +50,7 @@ const HomePage = () => {
   const prevSlide = () => setCurrentSlide(currentSlide === 0 ? slides.length - 1 : currentSlide - 1);
 
   return (
-    // Changed overflow to allow scrolling down
-    <div style={{ fontFamily: 'Arial, sans-serif', width: '100vw', minHeight: '100vh', overflowX: 'hidden', overflowY: 'auto', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', width: '100vw', minHeight: '100vh', overflowX: 'hidden', overflowY: 'auto', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff', position: 'relative' }}>
       
       {/* CSS For Animations & Grid */}
       <style>
@@ -61,6 +66,10 @@ const HomePage = () => {
           }
           @keyframes fadeUpTagline {
             0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes modalFadeIn {
+            0% { opacity: 0; transform: translateY(-20px); }
             100% { opacity: 1; transform: translateY(0); }
           }
           .footer-link {
@@ -83,13 +92,26 @@ const HomePage = () => {
             box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             border-color: #fca311;
           }
+          .faq-question {
+            font-weight: bold;
+            color: #14213d;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-size: 16px;
+          }
+          .faq-answer {
+            color: #666;
+            line-height: 1.5;
+            font-size: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 15px;
+          }
         `}
       </style>
 
-      {/* TOP HEADER SECTION (Stays at the top) */}
+      {/* TOP HEADER SECTION */}
       <header style={{ backgroundColor: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 50px', borderBottom: '2px solid #e5e5e5', zIndex: 20, position: 'sticky', top: 0 }}>
-        
-        {/* BIG ANIMATED LOGO AREA */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', cursor: 'pointer' }}>
             <span style={{ fontSize: '55px', fontWeight: '900', color: '#fca311', animation: 'pulseT 2.5s infinite ease-in-out', lineHeight: '1' }}>T</span>
@@ -100,19 +122,17 @@ const HomePage = () => {
           </span>
         </div>
 
-        {/* Auth Buttons */}
         <div style={{ display: 'flex', gap: '15px' }}>
-          <button style={{ padding: '12px 30px', backgroundColor: '#ffffff', color: '#14213d', border: '2px solid #14213d', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: 'all 0.3s' }}>
+          <button onClick={() => navigate('/auth')} style={{ padding: '12px 30px', backgroundColor: '#ffffff', color: '#14213d', border: '2px solid #14213d', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: 'all 0.3s' }}>
             Log in
           </button>
-          <button style={{ padding: '12px 30px', backgroundColor: '#fca311', color: '#14213d', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: 'all 0.3s' }}>
+          <button onClick={() => navigate('/auth')} style={{ padding: '12px 30px', backgroundColor: '#fca311', color: '#14213d', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: 'all 0.3s' }}>
             Sign up
           </button>
         </div>
-
       </header>
 
-      {/* HERO SLIDER SECTION (Fixed to about 90% of screen height so user knows to scroll) */}
+      {/* HERO SLIDER SECTION */}
       <div style={{ height: '88vh', position: 'relative', overflow: 'hidden' }}>
         
         {slides.map((slide, index) => (
@@ -140,10 +160,11 @@ const HomePage = () => {
           </p>
           
           <div style={{ display: 'flex', gap: '20px' }}>
-            <button style={{ padding: '15px 40px', backgroundColor: '#fca311', color: '#14213d', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', borderRadius: '4px' }}>
+            {/* NEW: Attached onClick handlers to open the modals */}
+            <button onClick={() => setShowAbout(true)} style={{ padding: '15px 40px', backgroundColor: '#fca311', color: '#14213d', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', borderRadius: '4px' }}>
               ABOUT US
             </button>
-            <button style={{ padding: '15px 40px', backgroundColor: 'transparent', color: '#ffffff', border: '2px solid #ffffff', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', borderRadius: '4px' }}>
+            <button onClick={() => setShowFAQ(true)} style={{ padding: '15px 40px', backgroundColor: 'transparent', color: '#ffffff', border: '2px solid #ffffff', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', borderRadius: '4px' }}>
               FAQS
             </button>
           </div>
@@ -159,9 +180,8 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* NEW SCROLLABLE WHITE SECTION: Smart Features */}
+      {/* SCROLLABLE WHITE SECTION: Smart Features */}
       <div style={{ padding: '80px 10%', backgroundColor: '#ffffff' }}>
-        
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <h3 style={{ color: '#fca311', fontWeight: 'bold', letterSpacing: '2px', fontSize: '16px', margin: '0 0 10px 0' }}>BEYOND TRADITIONAL ERP</h3>
           <h2 style={{ color: '#14213d', fontSize: '40px', fontWeight: '900', margin: 0 }}>Smart Automations & Integrations</h2>
@@ -170,68 +190,87 @@ const HomePage = () => {
           </p>
         </div>
 
-        {/* CSS Grid for Classic Card Layout */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
-          
-          {/* Feature 1 */}
           <div className="feature-card">
             <div style={{ fontSize: '40px', marginBottom: '20px' }}>💬</div>
             <h4 style={{ color: '#14213d', fontSize: '22px', fontWeight: 'bold', marginBottom: '15px', marginTop: 0 }}>Two-Way WhatsApp Bot</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>
-              Send automated payment reminders and allow customers to instantly check their Sale Order status simply by messaging your business number.
-            </p>
+            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>Send automated payment reminders and allow customers to instantly check their Sale Order status simply by messaging your business number.</p>
           </div>
-
-          {/* Feature 2 */}
           <div className="feature-card">
             <div style={{ fontSize: '40px', marginBottom: '20px' }}>📸</div>
             <h4 style={{ color: '#14213d', fontSize: '22px', fontWeight: 'bold', marginBottom: '15px', marginTop: 0 }}>Smart Receipt Scanner</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>
-              Avoid manual typing. Snap a picture of a vendor invoice and let our OCR text extraction instantly pull taxable values and GST for quick entry.
-            </p>
+            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>Avoid manual typing. Snap a picture of a vendor invoice and let our OCR text extraction instantly pull taxable values and GST for quick entry.</p>
           </div>
-
-          {/* Feature 3 */}
           <div className="feature-card">
             <div style={{ fontSize: '40px', marginBottom: '20px' }}>⚙️</div>
             <h4 style={{ color: '#14213d', fontSize: '22px', fontWeight: 'bold', marginBottom: '15px', marginTop: 0 }}>Predictive Maintenance</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>
-              Stop relying on fixed schedules. Our background logic calculates historical breakdown data to warn you before a machine fails.
-            </p>
+            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>Stop relying on fixed schedules. Our background logic calculates historical breakdown data to warn you before a machine fails.</p>
           </div>
-
-          {/* Feature 4 */}
           <div className="feature-card">
             <div style={{ fontSize: '40px', marginBottom: '20px' }}>📈</div>
             <h4 style={{ color: '#14213d', fontSize: '22px', fontWeight: 'bold', marginBottom: '15px', marginTop: 0 }}>Reverse Explosion Math</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>
-              Input your target production goals and instantly generate exact raw material deficits, total man-hours required, and accurate cost estimates.
-            </p>
+            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '15px', margin: 0 }}>Input your target production goals and instantly generate exact raw material deficits, total man-hours required, and accurate cost estimates.</p>
           </div>
-
         </div>
       </div>
 
-      {/* NEW WHITE FOOTER SECTION */}
+      {/* WHITE FOOTER SECTION */}
       <footer style={{ backgroundColor: '#ffffff', borderTop: '1px solid #e5e5e5', padding: '30px 50px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', zIndex: 20 }}>
-        
-        {/* Copyright */}
-        <div style={{ color: '#666' }}>
-          &copy; {new Date().getFullYear()} Telos Industrial ERP. All rights reserved.
-        </div>
-
-        {/* Made with Love by Code Killers */}
+        <div style={{ color: '#666' }}>&copy; {new Date().getFullYear()} Telos Industrial ERP. All rights reserved.</div>
         <div style={{ fontWeight: 'bold', letterSpacing: '0.5px', color: '#14213d' }}>
           Made with <span style={{ color: '#fca311', fontSize: '16px' }}>❤️</span> by Code killers
         </div>
-
-        {/* Legal Links */}
         <div style={{ display: 'flex', gap: '25px' }}>
           <a href="#" className="footer-link">Terms & Conditions</a>
           <a href="#" className="footer-link">Privacy Policy</a>
         </div>
-
       </footer>
+
+      {/* --- MODALS (POP-UPS) --- */}
+
+      {/* ABOUT US MODAL */}
+      {showAbout && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(20, 33, 61, 0.85)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '8px', maxWidth: '600px', width: '90%', animation: 'modalFadeIn 0.3s ease-out', position: 'relative' }}>
+            
+            {/* Close Button */}
+            <button onClick={() => setShowAbout(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}>&times;</button>
+            
+            <h2 style={{ color: '#14213d', borderBottom: '3px solid #fca311', display: 'inline-block', paddingBottom: '5px', marginTop: 0 }}>About Telos</h2>
+            <p style={{ color: '#666', lineHeight: '1.8', fontSize: '16px', marginTop: '20px' }}>
+              Telos is the central nervous system for modern manufacturing. Built as a comprehensive 13-module powerhouse, we bridge the gap between your busy factory floor and your final financial statements. 
+            </p>
+            <p style={{ color: '#666', lineHeight: '1.8', fontSize: '16px' }}>
+              We don't just record data; we actively work for you. From our AI-driven OCR receipt scanning to our predictive "Reverse Explosion" mathematics, we eliminate the guesswork from your supply chain, allowing you to build your legacy with precision and speed.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* FAQS MODAL */}
+      {showFAQ && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(20, 33, 61, 0.85)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '8px', maxWidth: '650px', width: '90%', maxHeight: '80vh', overflowY: 'auto', animation: 'modalFadeIn 0.3s ease-out', position: 'relative' }}>
+            
+            {/* Close Button */}
+            <button onClick={() => setShowFAQ(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}>&times;</button>
+            
+            <h2 style={{ color: '#14213d', borderBottom: '3px solid #fca311', display: 'inline-block', paddingBottom: '5px', marginTop: 0 }}>Frequently Asked Questions</h2>
+            
+            <div className="faq-question">What is the "Reverse Explosion" feature?</div>
+            <div className="faq-answer">It is our predictive simulation engine. You input a target goal (e.g., "Build 50 units"), and the system instantly calculates the exact raw materials required, total man-hours needed, and cost estimates by checking your current Bill of Materials against live inventory.</div>
+
+            <div className="faq-question">Does Telos handle external contract labor?</div>
+            <div className="faq-answer">Yes! We have a dedicated Contractor Management module that keeps external labor entirely separate from your on-roll employees, automatically calculating payouts based on daily rates and overtime.</div>
+
+            <div className="faq-question">How does the system help with Quality Control (QC)?</div>
+            <div className="faq-answer">We enforce standard checks at every critical stage: Incoming goods (IQC), during live production (PQC), and a final audit before dispatch (PDI), ensuring nothing leaves the floor without approval.</div>
+
+            <div className="faq-question">Can it send automated reminders to clients?</div>
+            <div className="faq-answer">Absolutely. Our Sales Hub integrates directly with a Two-Way WhatsApp bot and email triggers to automatically chase down pending payments and update clients on their dispatch status.</div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

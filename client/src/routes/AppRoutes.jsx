@@ -5,7 +5,7 @@ import DashboardLayout from '../components/Layouts/DashboardLayout';
 
 // Pages
 import HomePage from '../pages/Public/HomePage';
-import Login from '../pages/Auth/Login';
+import AuthPage from '../pages/Auth/AuthPage';
 import AdminDashboard from '../pages/Admin/AdminDashboard';
 import UserManagement from '../pages/Admin/UserManagement';
 import UserDashboard from '../pages/User/UserDashboard';
@@ -30,7 +30,7 @@ const AppRoutes = () => {
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<AuthPage />} />
 
             {/* Protected Routes inside DashboardLayout */}
             <Route element={<DashboardLayout />}>
