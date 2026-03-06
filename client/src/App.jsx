@@ -1,21 +1,15 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-// Import your pages (Make sure these paths match your folder structure!)
-import HomePage from './pages/Public/HomePage'; 
-import AuthPage from './pages/Auth/AuthPage';
+import AppRoutes from './routes/AppRoutes';
+import { AuthProvider } from './store/AuthContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* The '/' path is your default Homepage */}
-        <Route path="/" element={<HomePage />} />
-        
-        {/* The '/auth' path is your combined Login/Signup page */}
-        <Route path="/auth" element={<AuthPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

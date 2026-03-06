@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { registerUser, loginUser } from '../../services/authService';
+import { useAuth } from '../../store/AuthContext';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoginView, setIsLoginView] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -14,6 +17,7 @@ const AuthPage = () => {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
   const [focused, setFocused] = useState('');
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [submitted, setSubmitted] = useState(false);
@@ -41,8 +45,8 @@ const AuthPage = () => {
     if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
 
     if (!isLoginView) {
-      if (!formData.fullName) newErrors.fullName = 'Name is required';
-      if (formData.phone.length < 10) newErrors.phone = 'Enter a valid phone number';
+      if (!formData.fullName || formData.fullName.trim() === '') newErrors.fullName = 'Name is required';
+      if (!formData.phone || formData.phone.length < 10) newErrors.phone = 'Enter a valid phone number (min 10 digits)';
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
       if (!formData.address) newErrors.address = 'Address is required for logistics setup';
     }
@@ -55,40 +59,73 @@ const AuthPage = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: null });
-    
+
     // Auto-fill WhatsApp if phone is entered and they want to use the same number
     if (name === 'phone' && value.length >= 10) {
       setFormData(prev => ({ ...prev, [name]: value, whatsapp: value }));
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setSubmitted(true);
+    setServerError('');
 
-    // Simulation of requirement #1: Redirecting if user not found
-    // In a real app, you'd check this via an API response
-    if (isLoginView && formData.email === 'newuser@example.com') {
-      alert('Account not found. Redirecting you to Registration.');
-      setTimeout(() => {
-        setSubmitted(false);
-        setIsLoginView(false);
-      }, 1000);
-      return;
-    }
+    try {
+      if (isLoginView) {
+        // LOGIN
+        const response = await loginUser({
+          email: formData.email,
+          password: formData.password
+        });
 
-    setTimeout(() => {
+        if (response.success) {
+          login(response.user, response.token);
+          
+          // --- THE NEW TRAFFIC COP LOGIC ---
+          const role = response.user.role;
+          if (role === 'admin') {
+            navigate('/admin');
+          } else if (role === 'employee') {
+            navigate('/employee'); 
+          } else if (role === 'contractor') {
+            navigate('/contractor'); // Sends raw material suppliers to their specific view
+          } else {
+            navigate('/dashboard'); // Default regular user view
+          }
+        }
+      } else {
+        // REGISTER
+        // Map frontend fields to backend expected names:
+        // phone -> contactNo, whatsapp -> whatsappNumber
+        const response = await registerUser({
+          fullName: formData.fullName,
+          contactNo: formData.phone,
+          whatsappNumber: formData.whatsapp,
+          email: formData.email,
+          address: formData.address,
+          password: formData.password
+        });
+
+        if (response.success) {
+          alert('Registration successful! Please log in.');
+          setSubmitted(false);
+          switchView(); // toggle to login view
+        }
+      }
+    } catch (error) {
       setSubmitted(false);
-      console.log(isLoginView ? 'LOGIN DATA:' : 'REGISTER DATA:', formData);
-      // navigate('/dashboard'); // Logic to move to dashboard after success
-    }, 2000);
+      // Show error from backend or a generic fallback
+      setServerError(error.response?.data?.message || 'An error occurred. Please try again.');
+    }
   };
 
   const switchView = () => {
     setFormData({ fullName: '', phone: '', whatsapp: '', address: '', email: '', password: '', confirmPassword: '' });
     setErrors({});
+    setServerError('');
     setIsLoginView(!isLoginView);
     setViewAnimKey((prev) => prev + 1);
   };
@@ -120,9 +157,9 @@ const AuthPage = () => {
       ref={containerRef}
       style={{
         width: '100vw',
-        height: '100vh',
+        minHeight: '100vh',
         overflowX: 'hidden',
-        overflowY: 'hidden',
+        overflowY: 'auto',
         position: 'relative',
         background: '#f8f6ff'
       }}
@@ -131,9 +168,8 @@ const AuthPage = () => {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* Hide only the page scrollbar, not internal cards */
-        html, body { overflow: hidden; }
-        body::-webkit-scrollbar { display: none; }
+        /* Use default native scrollbars for the whole page */
+        html, body { overflow-y: auto; overflow-x: hidden; }
 
         /* make sure glass-card scrollbar stays visible */
         .glass-card::-webkit-scrollbar { width: 6px; }
@@ -223,9 +259,7 @@ const AuthPage = () => {
           will-change: transform, box-shadow;
           animation: cardEntry 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
           transition: transform 0.28s ease, box-shadow 0.28s ease;
-          overflow-y: overlay; /* overlay keeps scrollbar over content */
           box-sizing: border-box;
-          max-height: 90vh;
           padding: 20px 30px 40px;
           scrollbar-width: thin;
           scrollbar-color: rgba(252,163,17,0.6) transparent;
@@ -560,8 +594,8 @@ const AuthPage = () => {
           </div>
         </nav>
 
-        <div style={{ display: 'flex', height: 'calc(100vh - 70px)', position: 'relative', zIndex: 10, flexWrap: 'wrap', overflow: 'hidden' }}>
-          <div className="left-panel" style={{ flex: '1', minWidth: '350px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 60px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', position: 'relative', zIndex: 10, flexWrap: 'wrap' }}>
+          <div className="left-panel" style={{ flex: '1', minWidth: '350px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 60px' }}>
             <h1 className="headline" style={{ fontSize: '42px', fontWeight: '800', color: '#14213d', lineHeight: '1.2' }}>
               {isLoginView ? 'Your Factory,\nDigitized.' : 'Join the Industrial\nRevolution.'}
             </h1>
@@ -577,7 +611,7 @@ const AuthPage = () => {
             </div>
           </div>
 
-          <div className="glass-wrap" style={{ flex: '1', minWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', overflow: 'hidden' }}>
+          <div className="glass-wrap" style={{ flex: '1', minWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
             <div
               className="glass-card"
               style={{
@@ -634,15 +668,32 @@ const AuthPage = () => {
                   <button
                     type="submit"
                     className={`submit-btn ${submitted ? 'processing' : ''}`}
+                    disabled={submitted}
                     style={{
                       marginTop: '25px',
                       background: submitted ? '#22c55e' : '#14213d',
                       color: '#fff',
+                      opacity: submitted ? 0.8 : 1,
                       boxShadow: submitted ? '0 8px 20px rgba(34,197,94,0.25)' : '0 8px 20px rgba(20,33,61,0.2)'
                     }}
                   >
                     <span>{submitted ? 'Processing...' : isLoginView ? 'Access Dashboard ->' : 'Complete Registration'}</span>
                   </button>
+
+                  {serverError && (
+                    <div style={{
+                      marginTop: '15px',
+                      padding: '10px',
+                      background: 'rgba(255, 77, 79, 0.1)',
+                      color: '#ff4d4f',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      textAlign: 'center',
+                      fontWeight: '600'
+                    }}>
+                      {serverError}
+                    </div>
+                  )}
                 </form>
 
                 <p style={{ textAlign: 'center', fontSize: '13px', marginTop: '20px', color: '#999' }}>
