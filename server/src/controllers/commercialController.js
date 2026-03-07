@@ -15,7 +15,7 @@ exports.getSalesOrders = async (req, res) => {
     const formattedSales = result.rows.map(row => ({
       id: row.order_number,
       client: row.client_name,
-      amount: `$${Number(row.amount).toLocaleString()}`,
+      amount: `₹${Number(row.amount).toLocaleString()}`,
       status: row.status,
       date: new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       rep: row.rep || 'Unknown'
@@ -41,7 +41,7 @@ exports.getPurchaseOrders = async (req, res) => {
     const formattedPurchases = result.rows.map(row => ({
       id: row.po_number,
       vendor: row.vendor_name,
-      amount: `$${Number(row.amount).toLocaleString()}`,
+      amount: `₹${Number(row.amount).toLocaleString()}`,
       status: row.status,
       dept: row.department,
       date: new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),

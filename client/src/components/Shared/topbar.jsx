@@ -82,10 +82,12 @@ const TopBar = () => {
           .classic-nav {
             background-color: #fca311;
             display: flex;
-            padding: 0 50px;
+            padding: 0 24px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow-x: auto;
             scrollbar-width: none;
+            width: 100%;
+            box-sizing: border-box;
           }
           .classic-nav::-webkit-scrollbar { display: none; }
 
@@ -165,9 +167,11 @@ const TopBar = () => {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          padding: '12px 50px', 
+          padding: '12px 24px', 
           position: 'relative',
-          borderBottom: '1px solid #f0f0f0' 
+          borderBottom: '1px solid #f0f0f0',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           
           {/* Logo Section */}

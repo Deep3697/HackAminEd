@@ -96,7 +96,7 @@ const SalesPurchaseHub = () => {
   // Helper to calculate totals for the Revenue Summary
   const calculateTotal = (ordersArray) => {
     return ordersArray.reduce((total, order) => {
-      // Remove the '$' and commas to do math, then add them back
+      // Remove the '₹' and commas to do math, then add them back
       const num = Number(order.amount.replace(/[^0-9.-]+/g,""));
       return total + num;
     }, 0);
@@ -178,15 +178,15 @@ const SalesPurchaseHub = () => {
         <div className="hub-card" style={{ display: 'flex', marginBottom: '30px', borderTop: '5px solid #14213d' }}>
           <div className="stat-box">
             <div className="stat-label">{isAdmin ? 'Global Sales' : 'My Sales'}</div>
-            <div className="stat-value" style={{ color: '#27ae60' }}>${totalSales.toLocaleString()}</div>
+            <div className="stat-value" style={{ color: '#27ae60' }}>₹{totalSales.toLocaleString()}</div>
           </div>
           <div className="stat-box">
             <div className="stat-label">{isAdmin ? 'Global Purchase' : 'My Indents'}</div>
-            <div className="stat-value" style={{ color: '#c0392b' }}>${totalPurchase.toLocaleString()}</div>
+            <div className="stat-value" style={{ color: '#c0392b' }}>₹{totalPurchase.toLocaleString()}</div>
           </div>
           <div className="stat-box">
             <div className="stat-label">Net Margin</div>
-            <div className="stat-value">${netMargin.toLocaleString()}</div>
+            <div className="stat-value">₹{netMargin.toLocaleString()}</div>
           </div>
           <div className="stat-box">
             <div className="stat-label">Pending Approvals</div>
@@ -327,7 +327,7 @@ const SalesPurchaseHub = () => {
                 <input type="text" className="form-input" required value={inquiryForm.product} onChange={(e) => setInquiryForm({...inquiryForm, product: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Estimated Value (In USD)</label>
+                <label className="form-label">Estimated Value (In INR)</label>
                 <input type="number" className="form-input" required value={inquiryForm.amount} onChange={(e) => setInquiryForm({...inquiryForm, amount: e.target.value})} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
@@ -357,7 +357,7 @@ const SalesPurchaseHub = () => {
                 <input type="text" className="form-input" required value={indentForm.item} onChange={(e) => setIndentForm({...indentForm, item: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Estimated Budget (In USD)</label>
+                <label className="form-label">Estimated Budget (In INR)</label>
                 <input type="number" className="form-input" required value={indentForm.amount} onChange={(e) => setIndentForm({...indentForm, amount: e.target.value})} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>

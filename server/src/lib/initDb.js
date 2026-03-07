@@ -203,6 +203,42 @@ async function initDatabase() {
         procurement_gap NUMERIC(15, 2) DEFAULT 0.00,
         simulated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      -- ==========================================
+      -- REMINDERS MODULE TABLES
+      -- ==========================================
+      CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        contact_person VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+        invoice_number VARCHAR(50) UNIQUE NOT NULL,
+        invoice_date DATE NOT NULL,
+        credit_period_days INTEGER NOT NULL DEFAULT 30,
+        due_date DATE GENERATED ALWAYS AS (invoice_date + credit_period_days) STORED,
+        amount NUMERIC(15, 2) NOT NULL,
+        status VARCHAR(50) DEFAULT 'unpaid',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS communication_logs (
+        id SERIAL PRIMARY KEY,
+        invoice_id INTEGER REFERENCES invoices(id) ON DELETE CASCADE,
+        customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+        channel VARCHAR(50) NOT NULL, 
+        message_type VARCHAR(50) NOT NULL, 
+        message TEXT NOT NULL,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) DEFAULT 'success'
+      );
     `);
 
     // Single bootstrap admin so login works (amit.admin@telos.com / password123)

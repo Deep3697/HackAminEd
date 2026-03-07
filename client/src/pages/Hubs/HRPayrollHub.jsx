@@ -83,11 +83,11 @@ const AdminHrView = ({ user, token }) => {
         </div>
         <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #fca311' }}>
           <div className="kpi-label">Gross Payroll Est.</div>
-          <div className="kpi-value">$42,850.00</div>
+          <div className="kpi-value">₹42,850.00</div>
         </div>
         <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #c0392b' }}>
           <div className="kpi-label">Statutory Dues</div>
-          <div className="kpi-value" style={{ color: '#c0392b' }}>$6,730.00</div>
+          <div className="kpi-value" style={{ color: '#c0392b' }}>₹6,730.00</div>
         </div>
       </div>
 
@@ -114,8 +114,8 @@ const AdminHrView = ({ user, token }) => {
                   <td style={{ fontWeight: 'bold', color: '#14213d' }}>TEL-{emp.id}</td>
                   <td><div style={{ fontWeight: 'bold' }}>{emp.name}</div></td>
                   <td style={{ fontWeight: '900', color: parseFloat(emp.attendance) < 95 ? '#c0392b' : '#333' }}>{emp.attendance}%</td>
-                  <td style={{ fontFamily: 'monospace' }}>${parseFloat(emp.gross).toLocaleString()}</td>
-                  <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#14213d' }}>${parseFloat(emp.net).toLocaleString()}</td>
+                  <td style={{ fontFamily: 'monospace' }}>₹{parseFloat(emp.gross).toLocaleString()}</td>
+                  <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#14213d' }}>₹{parseFloat(emp.net).toLocaleString()}</td>
                   <td style={{ textAlign: 'left' }}><span className={`status-badge status-${emp.status.toLowerCase()}`}>{emp.status}</span></td>
                 </tr>
               ))}
@@ -174,7 +174,7 @@ const EmployeeHrView = ({ user, token }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '30px' }}>
         <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #27ae60' }}><div className="kpi-label">My Attendance (MTD)</div><div className="kpi-value" style={{ color: '#27ae60' }}>98.5%</div></div>
         <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #fca311' }}><div className="kpi-label">Leave Balance</div><div className="kpi-value">12 Days</div></div>
-        <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #14213d' }}><div className="kpi-label">YTD Net Earnings</div><div className="kpi-value">$24,400.00</div></div>
+        <div className="workforce-card" style={{ padding: '20px', borderTop: '4px solid #14213d' }}><div className="kpi-label">YTD Net Earnings</div><div className="kpi-value">₹24,400.00</div></div>
       </div>
 
       <div className="workforce-card">
@@ -189,8 +189,8 @@ const EmployeeHrView = ({ user, token }) => {
                 <tr key={slip.id}>
                   <td style={{ fontWeight: 'bold', color: '#14213d' }}>{slip.id}</td>
                   <td style={{ fontWeight: 'bold' }}>{slip.cycle}</td>
-                  <td>${parseFloat(slip.gross).toLocaleString()}</td>
-                  <td style={{ color: '#27ae60', fontWeight: 'bold' }}>${parseFloat(slip.net).toLocaleString()}</td>
+                  <td>₹{parseFloat(slip.gross).toLocaleString()}</td>
+                  <td style={{ color: '#27ae60', fontWeight: 'bold' }}>₹{parseFloat(slip.net).toLocaleString()}</td>
                   <td><span className={`status-badge status-${slip.status.toLowerCase()}`}>{slip.status}</span></td>
                   <td style={{ textAlign: 'right' }}><button style={{ background: 'none', border: 'none', color: '#14213d', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>PDF</button></td>
                 </tr>

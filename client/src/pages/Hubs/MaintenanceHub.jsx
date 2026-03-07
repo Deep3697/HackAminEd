@@ -80,7 +80,7 @@ const AdminMaintenanceView = ({ user, token }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
         <div className="asset-card" style={{ padding: '20px', borderTop: '4px solid #14213d' }}>
           <div style={{ color: '#888', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Book Value (Total)</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#14213d', marginTop: '5px' }}>$1.82M</div>
+          <div style={{ fontSize: '26px', fontWeight: '900', color: '#14213d', marginTop: '5px' }}>₹1.82M</div>
         </div>
         <div className="asset-card" style={{ padding: '20px', borderTop: '4px solid #27ae60' }}>
           <div style={{ color: '#888', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Fleet Availability</div>
@@ -92,7 +92,7 @@ const AdminMaintenanceView = ({ user, token }) => {
         </div>
         <div className="asset-card" style={{ padding: '20px', borderTop: '4px solid #c0392b' }}>
           <div style={{ color: '#888', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Downtime Cost (MTD)</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#c0392b', marginTop: '5px' }}>$4.5k</div>
+          <div style={{ fontSize: '26px', fontWeight: '900', color: '#c0392b', marginTop: '5px' }}>₹4.5k</div>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ const AdminMaintenanceView = ({ user, token }) => {
                 <tr key={asset.id}>
                   <td style={{ fontWeight: 'bold', color: '#14213d' }}>{asset.asset_code}</td>
                   <td style={{ fontWeight: 'bold' }}>{asset.asset_name}</td>
-                  <td style={{ fontFamily: 'monospace' }}>${parseFloat(asset.capital_value).toLocaleString()}</td>
+                  <td style={{ fontFamily: 'monospace' }}>₹{parseFloat(asset.capital_value).toLocaleString()}</td>
                   <td style={{ width: '180px' }}>
                     <div style={{ fontSize: '11px', fontWeight: 'bold', color: asset.health_score < 50 ? '#c0392b' : '#14213d' }}>{asset.health_score}% Optimal</div>
                     <div className="health-bar-bg"><div className="health-bar-fill" style={{ width: `${asset.health_score}%`, background: asset.health_score > 80 ? '#27ae60' : asset.health_score > 50 ? '#fca311' : '#c0392b' }}></div></div>
@@ -161,7 +161,7 @@ const AdminMaintenanceView = ({ user, token }) => {
                         <td><div style={{ fontWeight: 'bold', color: '#14213d' }}>{log.asset_code}</div><div style={{ fontSize: '11px' }}>{log.asset_name}</div></td>
                         <td>{log.technician_name || 'External Vendor'}</td>
                         <td>{log.action_performed}</td>
-                        <td style={{ color: '#c0392b', fontWeight: 'bold' }}>${parseFloat(log.cost).toLocaleString()}</td>
+                        <td style={{ color: '#c0392b', fontWeight: 'bold' }}>₹{parseFloat(log.cost).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -178,7 +178,7 @@ const AdminMaintenanceView = ({ user, token }) => {
             <div className="modal-header"><h3>Register Capital Asset</h3><button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button></div>
             <form className="form-body" onSubmit={(e) => handleGenericSubmit(e, 'Asset Registration')}>
               <div className="form-group"><label className="form-label">Asset Name / Model</label><input type="text" className="form-input" required /></div>
-              <div className="form-group"><label className="form-label">Capital Valuation (USD)</label><input type="number" className="form-input" required /></div>
+              <div className="form-group"><label className="form-label">Capital Valuation (INR)</label><input type="number" className="form-input" required /></div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}><button type="submit" className="btn-primary" style={{ flex: 1 }}>REGISTER ASSET</button><button type="button" onClick={() => setActiveModal(null)} className="btn-secondary">CANCEL</button></div>
             </form>
           </div>

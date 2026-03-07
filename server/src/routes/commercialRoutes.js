@@ -13,6 +13,6 @@ router.post('/sales', verifyToken, commercialController.createSalesOrder);
 router.post('/purchases', verifyToken, commercialController.createPurchaseOrder);
 
 // 3. PUT requests (Admin clicking 'Approve')
-router.put('/purchases/:id/approve', verifyToken, roleCheck(['Admin']), commercialController.approvePurchaseOrder);
+router.put('/purchases/:id/approve', verifyToken, roleCheck(['admin']), commercialController.approvePurchaseOrder);
 
 module.exports = router;

@@ -12,7 +12,11 @@ const PrivateRoute = ({ allowedRoles }) => {
 
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
         // Redirect based on role if they try to access a page they shouldn't
-        return user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />;
+        const role = user?.role?.toLowerCase();
+        if (role === 'admin') return <Navigate to="/admin" replace />;
+        if (role === 'employee') return <Navigate to="/employee" replace />;
+        if (role === 'contractor') return <Navigate to="/contractor" replace />;
+        return <Navigate to="/dashboard" replace />;
     }
 
     return <Outlet />;

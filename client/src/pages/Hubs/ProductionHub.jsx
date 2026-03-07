@@ -18,7 +18,9 @@ const ProductionQualityHub = () => {
   const [jobForm, setJobForm] = useState({ product: '', qty: '' });
   const [downtimeForm, setDowntimeForm] = useState({ machine: '', reason: '' });
   const [qcForm, setQcForm] = useState({ status: '', notes: '' });
-  const [explosionInput, setExplosionInput] = useState({ product: 'Industrial Turbine Blade', qty: '' });
+  const [explosionInput, setExplosionInput] = useState({ targetItemId: 1, qty: '' });
+  const [explosionResults, setExplosionResults] = useState(null);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   // --- 3. BULLETPROOF DB FETCH & MAPPING ---
   const fetchDashboardData = async () => {
@@ -107,9 +109,25 @@ const ProductionQualityHub = () => {
     } catch (err) { alert("Server connection failed"); }
   };
 
-  const handleCalculateDeficit = () => {
-    if (!explosionInput.qty) return alert("Please enter a Target Qty to calculate.");
-    setActiveModal('deficit');
+  const handleCalculateDeficit = async () => {
+    if (!explosionInput.qty || explosionInput.qty <= 0) return alert('Please enter a valid Target Qty to calculate.');
+    setIsSimulating(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const response = await fetch(`${API_URL}/simulation/explode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ targetItemId: Number(explosionInput.targetItemId), targetQuantity: Number(explosionInput.qty) })
+      });
+      if (!response.ok) throw new Error('Simulation failed. Ensure BOM data exists in the database.');
+      const data = await response.json();
+      setExplosionResults(data);
+      setActiveModal('deficit');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsSimulating(false);
+    }
   };
 
   const handleQcSubmit = async (e) => {
@@ -140,7 +158,7 @@ const ProductionQualityHub = () => {
 
   const safeRole = user?.role?.toLowerCase() || '';
   const isAdmin = safeRole === 'admin';
-  const isProdLead = user?.employeeType === 'Production & Quality Lead';
+  const isProdLead = user?.employeeType === 'Production & Quality Lead' || user?.employeeType === 'Production & Quality';
 
   if (user && !isAdmin && !isProdLead) {
     return (
@@ -303,13 +321,12 @@ const ProductionQualityHub = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <select className="explosion-input" style={{ width: '200px' }} value={explosionInput.product} onChange={(e) => setExplosionInput({ ...explosionInput, product: e.target.value })}>
-              <option>Industrial Turbine Blade</option>
-              <option>Hydraulic Seals</option>
-              <option>Gear Assembly</option>
+            <select className="explosion-input" style={{ width: '200px' }} value={explosionInput.targetItemId} onChange={(e) => setExplosionInput({ ...explosionInput, targetItemId: e.target.value })}>
+              <option value="1">Swift Car (Industrial Model)</option>
+              <option value="2">Standard Turbine Assembly</option>
             </select>
-            <input type="number" placeholder="Target Qty" className="explosion-input" value={explosionInput.qty} onChange={(e) => setExplosionInput({ ...explosionInput, qty: e.target.value })} />
-            <button className="btn-classic" onClick={handleCalculateDeficit}>CALCULATE DEFICIT</button>
+            <input type="number" placeholder="Target Qty" className="explosion-input" value={explosionInput.qty} onChange={(e) => setExplosionInput({ ...explosionInput, qty: e.target.value })} min="1" />
+            <button className="btn-classic" onClick={handleCalculateDeficit} disabled={isSimulating}>{isSimulating ? 'CALCULATING...' : 'CALCULATE DEFICIT'}</button>
           </div>
         </div>
       </div>
@@ -368,24 +385,31 @@ const ProductionQualityHub = () => {
         </div>
       )}
 
-      {/* 3. CALCULATE DEFICIT MODAL */}
-      {activeModal === 'deficit' && (
+      {/* 3. CALCULATE DEFICIT MODAL (REAL API RESULTS) */}
+      {activeModal === 'deficit' && explosionResults && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" style={{ width: '600px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box" style={{ width: '700px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ background: '#fca311', color: '#14213d' }}>
               <h3>BOM Explosion Results</h3>
               <button className="close-btn" style={{ color: '#14213d' }} onClick={() => setActiveModal(null)}>&times;</button>
             </div>
             <div className="form-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                <div><span style={{ fontSize: '11px', color: '#888', fontWeight: 'bold' }}>TARGET PRODUCT</span><div style={{ fontWeight: 'bold', color: '#14213d', fontSize: '16px' }}>{explosionInput.product}</div></div>
-                <div style={{ textAlign: 'right' }}><span style={{ fontSize: '11px', color: '#888', fontWeight: 'bold' }}>SIMULATED QTY</span><div style={{ fontWeight: 'bold', color: '#14213d', fontSize: '16px' }}>{explosionInput.qty} Units</div></div>
+                <div><span style={{ fontSize: '11px', color: '#888', fontWeight: 'bold' }}>SIMULATED QTY</span><div style={{ fontWeight: 'bold', color: '#14213d', fontSize: '16px' }}>{explosionResults.targetQuantity} Units</div></div>
+                <div style={{ textAlign: 'right' }}><span style={{ fontSize: '11px', color: '#888', fontWeight: 'bold' }}>TOTAL LABOR</span><div style={{ fontWeight: 'bold', color: '#14213d', fontSize: '16px' }}>{explosionResults.totalManHours} Hrs</div></div>
               </div>
               <table className="data-table" style={{ marginBottom: '20px' }}>
-                <thead><tr><th style={{ background: '#f1f1f1', fontSize: '11px' }}>RAW MATERIAL</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>REQUIRED</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>AVAILABLE</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>STATUS</th></tr></thead>
+                <thead><tr><th style={{ background: '#f1f1f1', fontSize: '11px' }}>RAW MATERIAL</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>REQUIRED</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>AVAILABLE</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>SHORTFALL</th><th style={{ background: '#f1f1f1', fontSize: '11px' }}>STATUS</th></tr></thead>
                 <tbody>
-                  <tr><td style={{ fontWeight: 'bold' }}>Steel Alloy Sheets</td><td>{explosionInput.qty * 2.5} kg</td><td>1,200 kg</td><td><span style={{ color: '#27ae60', fontWeight: 'bold', fontSize: '11px', background: '#e8f5e9', padding: '2px 6px', borderRadius: '2px' }}>Sufficient</span></td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Binding Resin</td><td>{explosionInput.qty * 0.5} Ltr</td><td>45 Ltr</td><td><span style={{ color: '#c0392b', fontWeight: 'bold', fontSize: '11px', background: '#ffebee', padding: '2px 6px', borderRadius: '2px' }}>Deficit</span></td></tr>
+                  {explosionResults.materialsNeeded.map((item, index) => (
+                    <tr key={index}>
+                      <td style={{ fontWeight: 'bold', color: '#14213d' }}>{item.materialName}</td>
+                      <td style={{ fontWeight: '900' }}>{item.requiredQty} {item.unit}</td>
+                      <td style={{ color: '#666' }}>{item.currentStock} {item.unit}</td>
+                      <td style={{ color: '#c0392b', fontWeight: 'bold' }}>{item.shortfall > 0 ? item.shortfall : '0'} {item.unit}</td>
+                      <td><span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', padding: '3px 6px', borderRadius: '3px', background: item.status === 'Shortfall' ? '#ffebee' : '#e8f5e9', color: item.status === 'Shortfall' ? '#c62828' : '#2e7d32' }}>{item.status}</span></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               <button onClick={() => setActiveModal(null)} style={{ width: '100%', padding: '12px', background: '#14213d', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>CLOSE SIMULATION</button>

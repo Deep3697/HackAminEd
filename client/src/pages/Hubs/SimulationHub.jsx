@@ -84,7 +84,7 @@ const AdminSimulationView = ({ user, token }) => {
 
   const handleIndentSubmit = async (e) => {
     e.preventDefault();
-    alert(`Purchase Indent for $${procurementGap.toLocaleString()} has been routed to the Commercial Hub.`);
+    alert(`Purchase Indent for ₹${procurementGap.toLocaleString()} has been routed to the Commercial Hub.`);
     setActiveModal(null);
   };
 
@@ -164,7 +164,7 @@ const AdminSimulationView = ({ user, token }) => {
             <div style={{ padding: '25px', background: '#14213d', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#fca311', textTransform: 'uppercase' }}>Est. Procurement Gap</div>
-                <div style={{ fontSize: '24px', fontWeight: '900', marginTop: '5px' }}>${procurementGap.toLocaleString()}</div>
+                <div style={{ fontSize: '24px', fontWeight: '900', marginTop: '5px' }}>₹{procurementGap.toLocaleString()}</div>
               </div>
               <div style={{ display: 'flex', gap: '15px' }}>
                 <button onClick={() => setActiveModal('bom')} style={{ background: 'transparent', color: '#fff', border: '1px solid #fff', padding: '12px 20px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>VIEW RECIPE</button>
@@ -195,7 +195,7 @@ const AdminSimulationView = ({ user, token }) => {
                     <tr key={index}>
                       <td style={{ fontWeight: 'bold', color: '#14213d' }}>{item.materialName}</td>
                       <td style={{ color: '#c0392b', fontWeight: 'bold' }}>{item.shortfall} {item.unit}</td>
-                      <td>${item.estCost.toLocaleString()}</td>
+                      <td>₹{item.estCost.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -228,7 +228,7 @@ const AdminSimulationView = ({ user, token }) => {
                         <td style={{ fontWeight: 'bold', color: '#14213d' }}>{log.item_name}</td>
                         <td>{log.target_qty} Units</td>
                         <td style={{ color: log.procurement_gap > 0 ? '#c0392b' : '#27ae60', fontWeight: 'bold' }}>
-                          ${parseFloat(log.procurement_gap).toLocaleString()}
+                          ₹{parseFloat(log.procurement_gap).toLocaleString()}
                         </td>
                         <td>{log.user_name}</td>
                       </tr>

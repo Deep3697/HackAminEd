@@ -9,7 +9,8 @@ import AdminDashboard from '../pages/Admin/AdminDashboard';
 import UserManagement from '../pages/Admin/UserManagement';
 import UserDashboard from '../pages/User/UserDashboard';
 import EmployeeDashboard from '../pages/Employee/EmployeeDashboard'; 
-import ContractorDashboard from '../pages/Contractor/ContractorDashboard'; // <-- Added Contractor Import
+import ContractorDashboard from '../pages/Contractor/ContractorDashboard';
+import CommandCenter from '../pages/Hubs/CommandCenter';
 
 // Hubs 
 import SalesHub from '../pages/Hubs/SalesHub';
@@ -33,40 +34,65 @@ const AppRoutes = () => {
             <Route path="/auth" element={<AuthPage />} /> 
 
             <Route element={<DashboardLayout />}>
-                {/* Admin Only */}
+                {/* =====================================================
+                    ADMIN ONLY ROUTES (9 Nav Hubs)
+                    Command Center, Users, Sales & Purchase, Production & QC,
+                    Inventory & Logistics, Finance & Statutory, HR & Payroll,
+                    Maintenance & Assets, Simulation Tool
+                   ===================================================== */}
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin" element={<CommandCenter />} />
                     <Route path="/admin/users" element={<UserManagement />} />
+                    <Route path="/simulation" element={<SimulationHub />} />
                 </Route>
 
-                {/* Employee Only */}
+                {/* =====================================================
+                    ADMIN + EMPLOYEE ROUTES
+                    Shared hubs accessible to both admin and employees
+                   ===================================================== */}
                 <Route element={<PrivateRoute allowedRoles={['admin', 'employee']} />}>
                     <Route path="/employee" element={<EmployeeDashboard />} />
+                    <Route path="/production" element={<ProductionHub />} />
+                    <Route path="/inventory" element={<InventoryHub />} />
+                    <Route path="/logistics" element={<LogisticsHub />} />
+                    <Route path="/reports" element={<ReportsHub />} />
+                    <Route path="/hr-payroll" element={<HRPayrollHub />} />
+                    <Route path="/statutory" element={<StatutoryHub />} />
+                    <Route path="/maintenance" element={<MaintenanceHub />} />
+                    <Route path="/assets" element={<AssetsHub />} />
                 </Route>
 
-                {/* Contractor Only */}
+                {/* =====================================================
+                    ADMIN + EMPLOYEE + USER ROUTES
+                    Sales & Finance hubs
+                   ===================================================== */}
+                <Route element={<PrivateRoute allowedRoles={['admin', 'employee', 'user']} />}>
+                    <Route path="/sales" element={<SalesHub />} />
+                    <Route path="/finance" element={<FinanceHub />} />
+                </Route>
+
+                {/* =====================================================
+                    ADMIN + EMPLOYEE + CONTRACTOR ROUTES
+                    Purchase & Quality hubs
+                   ===================================================== */}
+                <Route element={<PrivateRoute allowedRoles={['admin', 'employee', 'contractor']} />}>
+                    <Route path="/purchase" element={<PurchaseHub />} />
+                    <Route path="/quality" element={<QualityHub />} />
+                </Route>
+
+                {/* =====================================================
+                    CONTRACTOR ONLY DASHBOARD
+                   ===================================================== */}
                 <Route element={<PrivateRoute allowedRoles={['admin', 'contractor']} />}>
                     <Route path="/contractor" element={<ContractorDashboard />} />
                 </Route>
 
-                {/* All logged-in users */}
-                <Route element={<PrivateRoute allowedRoles={['admin', 'user', 'employee', 'contractor']} />}>
+                {/* =====================================================
+                    CUSTOMER/USER ROUTES (3 Nav Hubs)
+                    Client Portal, New Orders (Sales), Invoices (Finance)
+                   ===================================================== */}
+                <Route element={<PrivateRoute allowedRoles={['admin', 'user']} />}>
                     <Route path="/dashboard" element={<UserDashboard />} />
-                    
-                    {/* The 13 Hubs */}
-                    <Route path="/sales" element={<SalesHub />} />
-                    <Route path="/purchase" element={<PurchaseHub />} />
-                    <Route path="/production" element={<ProductionHub />} />
-                    <Route path="/finance" element={<FinanceHub />} />
-                    <Route path="/hr-payroll" element={<HRPayrollHub />} />
-                    <Route path="/logistics" element={<LogisticsHub />} />
-                    <Route path="/quality" element={<QualityHub />} />
-                    <Route path="/maintenance" element={<MaintenanceHub />} />
-                    <Route path="/inventory" element={<InventoryHub />} />
-                    <Route path="/assets" element={<AssetsHub />} />
-                    <Route path="/statutory" element={<StatutoryHub />} />
-                    <Route path="/simulation" element={<SimulationHub />} />
-                    <Route path="/reports" element={<ReportsHub />} />
                 </Route>
             </Route>
 

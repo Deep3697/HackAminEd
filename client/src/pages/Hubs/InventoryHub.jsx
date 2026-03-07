@@ -128,6 +128,11 @@ const InventoryHub = () => {
           .form-label { display: block; font-size: 12px; color: #666; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
           .form-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
           .form-input:focus { border-color: #fca311; }
+          
+          .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(20, 33, 61, 0.2); border-radius: 10px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(20, 33, 61, 0.4); }
         `}
       </style>
 
@@ -153,7 +158,7 @@ const InventoryHub = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '30px' }}>
         <div className="supply-card" style={{ padding: '20px', borderLeft: '6px solid #14213d' }}>
           <div style={{ color: '#888', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Inventory Value</div>
-          <div style={{ color: '#14213d', fontSize: '28px', fontWeight: '900', marginTop: '5px' }}>$2.48 Million</div>
+          <div style={{ color: '#14213d', fontSize: '28px', fontWeight: '900', marginTop: '5px' }}>₹2.48 Million</div>
         </div>
         <div className="supply-card" style={{ padding: '20px', borderLeft: '6px solid #27ae60' }}>
           <div style={{ color: '#888', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Warehouse Capacity</div>
@@ -193,12 +198,12 @@ const InventoryHub = () => {
           </table>
         </div>
 
-        <div className="supply-card">
+        <div className="supply-card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="hub-header" style={{ background: '#fca311', color: '#14213d' }}>
             <span>LIVE MOVEMENT FEED</span>
             <span style={{ fontSize: '18px' }}>🚛</span>
           </div>
-          <div style={{ height: '400px', overflowY: 'auto' }}>
+          <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: '400px', maxHeight: '600px' }}>
             {movements.map(move => (
               <div className="movement-item" key={move.id}>
                 <div style={{ fontSize: '24px' }}>{move.type === 'INBOUND' ? '📥' : '📤'}</div>

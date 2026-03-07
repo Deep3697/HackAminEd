@@ -46,7 +46,7 @@ exports.calculateExplosion = async (req, res) => {
       
       totalManHours += (hoursPerUnit * targetQuantity);
 
-      // Calculate cost gap (mocking $45/unit to match the frontend UI)
+      // Calculate cost gap (mocking ₹45/unit to match the frontend UI)
       if (actualShortfall > 0) {
         totalProcurementGap += (actualShortfall * 45); 
       }

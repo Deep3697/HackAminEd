@@ -1,8 +1,9 @@
 // server/src/server.js
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const initDatabase = require('./lib/initDb');
+const { initReminderJob } = require('./jobs/reminderJob');
 
 // 1. Import your new routes file
 const authRoutes = require('./routes/authRoutes');
@@ -14,9 +15,13 @@ const financeRoutes = require('./routes/financeRoutes');
 const hrRoutes = require('./routes/hrRoutes');
 const maintenanceRoutes = require('./routes/maintenanceRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 // Initialize database tables on startup (don't block server if DB fails)
-initDatabase().catch((err) => console.error('❌ DB init warning:', err.message));
+initDatabase().then(() => {
+  // Start the background jobs once DB is up
+  initReminderJob();
+}).catch((err) => console.error('❌ DB init warning:', err.message));
 
 // 2. Initialize App (This MUST come before any app.use calls)
 const app = express();
@@ -35,6 +40,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/simulation', simulationRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 5. Health Check to test connection
 app.get('/api/status', (req, res) => {
