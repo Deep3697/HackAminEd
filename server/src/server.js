@@ -1,7 +1,17 @@
 // server/src/server.js
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+const path = require('path');
+
+// Load environment variables.  The .env file now lives inside the server
+// folder (not at workspace root).  dotenv will silently succeed even if the
+// file is missing, so we log a warning for convenience during development.
+const envPath = path.resolve(__dirname, '../.env');
+const result = require('dotenv').config({ path: envPath });
+if (result.error) {
+  console.warn(`⚠️ .env file not found at ${envPath}. Using process.env values.`);
+}
+
 const initDatabase = require('./lib/initDb');
 const { initReminderJob } = require('./jobs/reminderJob');
 

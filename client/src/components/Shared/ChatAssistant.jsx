@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, X, Bot } from 'lucide-react';
+import API from '../../services/api';
 
 const Chatbot = ({ userRole }) => {
   const [messages, setMessages] = useState([]);
@@ -22,31 +23,36 @@ const Chatbot = ({ userRole }) => {
     setMessages(prev => [...prev, userMessage]);
     const currentInput = input;
     setInput('');
-    
+
     setIsTyping(true);
 
     try {
-      // POSTING TO YOUR BACKEND URL
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
-      const response = await fetch(`${API_URL}/ai/command`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: currentInput, 
-          // THIS IS THE MAGIC LINE: Pass the actual role, default to 'user' if missing
-          userRole: userRole || 'user' 
-        }),
+      // use the shared axios instance so the base URL is always correct
+      // and respect any renamed environment variable or custom endpoint
+      const endpoint = import.meta.env.VITE_AI_ENDPOINT || '/ai/command';
+
+      const response = await API.post(endpoint, {
+        message: currentInput,
+        userRole: userRole || 'user',
       });
 
-      const data = await response.json();
-      
-      // Stop typing and show the message
-      setMessages(prev => [...prev, { text: data.reply, sender: 'bot' }]);
-      setIsTyping(false);
-
+      const data = response.data;
+      if (data && typeof data.reply === 'string') {
+        setMessages(prev => [...prev, { text: data.reply, sender: 'bot' }]);
+      } else {
+        // unexpected shape
+        console.warn('Unexpected chatbot response shape', data);
+        setMessages(prev => [...prev, { text: "Sorry, I didn't get a reply from the server.", sender: 'bot' }]);
+      }
     } catch (error) {
-      console.error("Frontend Error:", error);
-      setMessages(prev => [...prev, { text: "I'm having trouble connecting. Is the server running?", sender: 'bot' }]);
+      console.error('Chatbot request failed:', error);
+      // try to display server-provided message if available
+      const errMsg =
+        error?.response?.data?.reply ||
+        error.message ||
+        "I'm having trouble connecting. Is the server running?";
+      setMessages(prev => [...prev, { text: errMsg, sender: 'bot' }]);
+    } finally {
       setIsTyping(false);
     }
   };

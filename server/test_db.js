@@ -1,4 +1,4 @@
-require('dotenv').config({ path: 'e:/HackAminEd/server/.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, './.env') });
 const { Pool } = require('pg');
 
 const pool = new Pool({

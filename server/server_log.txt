@@ -1,0 +1,9 @@
+⏳ Initializing database schema...
+✅ Telos ERP is running on port 5001
+✅ Database connected
+✅ Database schema verified/created.
+⏰ Starting invoice reminder cron job (Schedule: 0 8 * * *)
+🤖 === NEW AI REQUEST ===
+🗣️ User Message: Hello AI
+🛡️ Role Detected by Backend: admin
+🔓 Action: ADMIN access granted.

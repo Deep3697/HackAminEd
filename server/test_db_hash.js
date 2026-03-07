@@ -1,7 +1,7 @@
 // /tmp/test_db_hash.js
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
-require('dotenv').config({ path: 'e:/HackAminEd/server/.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, './.env') });
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

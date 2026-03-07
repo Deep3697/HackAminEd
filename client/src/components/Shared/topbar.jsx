@@ -78,30 +78,46 @@ const TopBar = () => {
             from { opacity: 0; transform: translateY(-10px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
           }
+          @keyframes glowT {
+            0% { text-shadow: 0 0 0px #fca311; }
+            50% { text-shadow: 0 0 20px #fca311, 0 0 30px #fca311; }
+            100% { text-shadow: 0 0 10px #fca311; }
+          }
+          @keyframes pulseT {
+            0% { text-shadow: 0 0 10px #fca311; transform: scale(1); }
+            50% { text-shadow: 0 0 25px #fca311; transform: scale(1.05); }
+            100% { text-shadow: 0 0 10px #fca311; transform: scale(1); }
+          }
+          @keyframes slideOutElos {
+            0% { transform: translateX(-100%); opacity: 0; }
+            70% { transform: translateX(5%); opacity: 1; }
+            100% { transform: translateX(0); opacity: 1; }
+          }
 
           .classic-nav {
             background-color: #fca311;
             display: flex;
+            flex-wrap: wrap;
             padding: 0 24px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-            scrollbar-width: none;
             width: 100%;
             box-sizing: border-box;
           }
-          .classic-nav::-webkit-scrollbar { display: none; }
 
           .nav-item {
-            padding: 15px 20px;
+            padding: 14px 16px;
             color: #14213d;
-            font-weight: 700;
-            font-size: 13px;
+            font-weight: 800;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
             border-right: 1px solid rgba(20, 33, 61, 0.1);
             transition: all 0.2s ease;
             white-space: nowrap;
+          }
+          .nav-item:last-child {
+            border-right: none;
           }
           .nav-item:hover { background-color: #14213d; color: #ffffff; }
           .nav-item.active { background-color: #14213d; color: #ffffff; box-shadow: inset 0 -3px 0 #ffffff; }
@@ -175,9 +191,11 @@ const TopBar = () => {
         }}>
           
           {/* Logo Section */}
-          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'baseline', cursor: 'pointer' }}>
-            <span style={{ fontSize: '45px', fontWeight: '900', color: '#fca311', lineHeight: '1' }}>T</span>
-            <span style={{ fontSize: '35px', fontWeight: '800', color: '#14213d', lineHeight: '1' }}>elos</span>
+          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'baseline', cursor: 'pointer', overflow: 'hidden', padding: '10px 15px', margin: '-10px -15px' }}>
+            <span style={{ fontSize: '42px', fontWeight: '900', color: '#fca311', animation: 'glowT 1.5s ease-out forwards, pulseT 3s infinite ease-in-out 1.5s', lineHeight: '1', zIndex: 2, position: 'relative' }}>T</span>
+            <div style={{ overflow: 'hidden', display: 'inline-block', paddingRight: '10px' }}>
+              <span style={{ fontSize: '36px', fontWeight: '900', color: '#14213d', lineHeight: '1', letterSpacing: '-1px', display: 'inline-block', animation: 'slideOutElos 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards' }}>elos</span>
+            </div>
           </div>
 
           {/* Profile Area */}
