@@ -117,8 +117,14 @@ const AuthPage = () => {
       }
     } catch (error) {
       setSubmitted(false);
-      // Show error from backend or a generic fallback
-      setServerError(error.response?.data?.message || 'An error occurred. Please try again.');
+      const msg = error.response?.data?.message;
+      if (msg) {
+        setServerError(msg);
+      } else if (!error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network'))) {
+        setServerError('Cannot reach server. Is the backend running on port 5001?');
+      } else {
+        setServerError('An error occurred. Please try again.');
+      }
     }
   };
 

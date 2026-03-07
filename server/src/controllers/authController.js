@@ -42,15 +42,16 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
 
     // 1. Fetch the user AND their specific employee department (if they have one)
     const query = `
       SELECT p.*, e.employee_type 
       FROM person p 
       LEFT JOIN employee e ON p.id = e.person_id 
-      WHERE p.email = $1
+      WHERE LOWER(TRIM(p.email)) = $1
     `;
-    const result = await db.query(query, [email]);
+    const result = await db.query(query, [cleanEmail]);
     
     if (result.rows.length === 0) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
@@ -58,8 +59,9 @@ exports.login = async (req, res) => {
     
     const person = result.rows[0];
 
-    // 2. Verify the password
-    const isMatch = await bcrypt.compare(password, person.password);
+    // 2. Verify the password (trim so copy-paste doesn't break login)
+    const cleanPassword = (password || '').trim();
+    const isMatch = await bcrypt.compare(cleanPassword, person.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }

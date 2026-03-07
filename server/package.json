@@ -8,7 +8,10 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "seed-demo": "node seed_demo_data.js",
+    "cleanup-person-columns": "node cleanup_person_columns.js",
+    "fix-admin-password": "node fix_admin_password.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

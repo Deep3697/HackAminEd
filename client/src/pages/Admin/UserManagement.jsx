@@ -20,11 +20,13 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  // Classical Search Bar filter logic
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Classical Search Bar filter logic (defensive: never render admins)
+  const filteredUsers = users
+    .filter((u) => String(u?.role || '').trim().toLowerCase() !== 'admin')
+    .filter(user => 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   // Save changes to the backend
   const handleSaveRole = async () => {

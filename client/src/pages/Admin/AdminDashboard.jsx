@@ -1,87 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 
 const AdminDashboard = () => {
   // --- 1. STATES FOR DYNAMIC DATA ---
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
-  
+
   // KPI States
   const [kpis, setKpis] = useState({
-    inquiries: 14,
-    production: 8,
-    receipts: 5,
-    alerts: 2
+    inquiries: 0,
+    production: 0,
+    receipts: 0,
+    alerts: 0
   });
 
   // Table States
-  const [salesOrders, setSalesOrders] = useState([
-    { id: 'SO-1045', client: 'Alpha Industries Pvt Ltd', date: 'Oct 24, 2023', status: 'Processing', badgeClass: 'badge-processing' },
-    { id: 'SO-1046', client: 'Beta Corp Technologies', date: 'Oct 23, 2023', status: 'Dispatched', badgeClass: 'badge-shipped' },
-    { id: 'SO-1047', client: 'Omega Heavy Logistics', date: 'Oct 22, 2023', status: 'Processing', badgeClass: 'badge-processing' },
-  ]);
+  const [salesOrders, setSalesOrders] = useState([]);
+  const [inventoryAlerts, setInventoryAlerts] = useState([]);
 
-  // --- 2. REFRESH HANDLER ---
-  const handleRefresh = () => {
+  // --- 2. DATA FETCHING FUNCTION ---
+  const fetchDashboardData = async () => {
     setIsRefreshing(true);
-    
-    // Simulate a network request delay of 1 second
-    setTimeout(() => {
-      // Randomize KPIs slightly to show the data actually updated
-      setKpis({
-        inquiries: Math.floor(Math.random() * 5) + 12, 
-        production: Math.floor(Math.random() * 3) + 7,
-        receipts: Math.floor(Math.random() * 4) + 4,
-        alerts: Math.floor(Math.random() * 3) + 1
-      });
-      
-      setLastUpdated(new Date().toLocaleTimeString());
+    try {
+      const response = await api.get('/admin/dashboard');
+      if (response.data.success) {
+        setKpis(response.data.kpis);
+        setSalesOrders(response.data.salesOrders);
+        setInventoryAlerts(response.data.inventoryAlerts);
+        setLastUpdated(new Date().toLocaleTimeString());
+      }
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+    } finally {
       setIsRefreshing(false);
-    }, 1000);
+    }
+  };
+
+  // --- 3. LIFECYCLE HOOK ---
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // --- 4. REFRESH HANDLER ---
+  const handleRefresh = () => {
+    fetchDashboardData();
   };
 
   return (
     <div style={{ padding: '30px 50px', flex: 1 }}>
-      
+
       <style>
         {`
-          /* Upgraded Classic Card */
-          .classic-card {
-            background-color: #ffffff;
-            border: 1px solid #dcdcdc;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
+        /* Upgraded Classic Card */
+        .classic-card {
+          background - color: #ffffff;
+        border: 1px solid #dcdcdc;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        display: flex;
+        flex-direction: column;
           }
-          
-          /* Top KPI Cards */
-          .kpi-card {
-            border-top: 4px solid #14213d;
-            padding: 20px;
-            transition: transform 0.2s;
+
+        /* Top KPI Cards */
+        .kpi-card {
+          border - top: 4px solid #14213d;
+        padding: 20px;
+        transition: transform 0.2s;
           }
-          .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
-          .kpi-warning { border-top: 4px solid #fca311; }
+        .kpi-card:hover {transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .kpi-warning {border - top: 4px solid #fca311; }
 
-          /* Premium Table Styles */
-          .erp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-          .erp-table th {
-            background-color: #14213d; color: #ffffff;
-            padding: 12px 15px; text-align: left; font-size: 13px; letter-spacing: 0.5px;
+        /* Premium Table Styles */
+        .erp-table {width: 100%; border-collapse: collapse; font-size: 14px; }
+        .erp-table th {
+          background - color: #14213d; color: #ffffff;
+        padding: 12px 15px; text-align: left; font-size: 13px; letter-spacing: 0.5px;
           }
-          .erp-table td { padding: 12px 15px; border-bottom: 1px solid #e5e5e5; color: #14213d; }
-          .erp-table tr:nth-child(even) { background-color: #f9f9f9; }
-          .erp-table tr:hover { background-color: rgba(252, 163, 17, 0.08); }
+        .erp-table td {padding: 12px 15px; border-bottom: 1px solid #e5e5e5; color: #14213d; }
+        .erp-table tr:nth-child(even) {background - color: #f9f9f9; }
+        .erp-table tr:hover {background - color: rgba(252, 163, 17, 0.08); }
 
-          /* Status Badges */
-          .status-badge { padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-          .badge-processing { background-color: #e5e5e5; color: #14213d; border: 1px solid #cccccc; }
-          .badge-shipped { background-color: rgba(46, 204, 113, 0.15); color: #27ae60; border: 1px solid #2ecc71; }
-          .badge-critical { background-color: rgba(231, 76, 60, 0.1); color: #c0392b; border: 1px solid #e74c3c; }
-          .badge-warning { background-color: rgba(252, 163, 17, 0.15); color: #d35400; border: 1px solid #fca311; }
+        /* Status Badges */
+        .status-badge {padding: 4px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-processing {background - color: #e5e5e5; color: #14213d; border: 1px solid #cccccc; }
+        .badge-shipped {background - color: rgba(46, 204, 113, 0.15); color: #27ae60; border: 1px solid #2ecc71; }
+        .badge-critical {background - color: rgba(231, 76, 60, 0.1); color: #c0392b; border: 1px solid #e74c3c; }
+        .badge-warning {background - color: rgba(252, 163, 17, 0.15); color: #d35400; border: 1px solid #fca311; }
 
-          /* Refresh Animation */
-          @keyframes spin { 100% { transform: rotate(360deg); } }
-          .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
+        /* Refresh Animation */
+        @keyframes spin {100 % { transform: rotate(360deg); }}
+        .spin-icon {display: inline-block; animation: spin 1s linear infinite; }
         `}
       </style>
 
@@ -96,19 +103,19 @@ const AdminDashboard = () => {
             </span>
           </div>
         </div>
-        <button 
+        <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          style={{ 
-            backgroundColor: '#14213d', color: '#ffffff', border: 'none', 
-            padding: '10px 20px', fontWeight: 'bold', fontSize: '13px', 
+          style={{
+            backgroundColor: '#14213d', color: '#ffffff', border: 'none',
+            padding: '10px 20px', fontWeight: 'bold', fontSize: '13px',
             cursor: isRefreshing ? 'not-allowed' : 'pointer',
             opacity: isRefreshing ? 0.8 : 1,
             transition: '0.2s',
             display: 'flex', gap: '8px', alignItems: 'center'
           }}
         >
-          <span className={isRefreshing ? 'spin-icon' : ''}>↻</span> 
+          <span className={isRefreshing ? 'spin-icon' : ''}>↻</span>
           {isRefreshing ? 'SYNCING...' : 'REFRESH DATA'}
         </button>
       </div>
@@ -118,7 +125,7 @@ const AdminDashboard = () => {
         <div className="classic-card kpi-card">
           <div style={{ fontSize: '13px', color: '#666666', fontWeight: 'bold' }}>PENDING INQUIRIES</div>
           <div style={{ fontSize: '34px', color: '#14213d', fontWeight: '900', marginTop: '8px' }}>{kpis.inquiries}</div>
-          <div style={{ fontSize: '12px', color: '#27ae60', marginTop: '5px', fontWeight: 'bold' }}>↑ 2 New Today</div>
+          <div style={{ fontSize: '12px', color: '#27ae60', marginTop: '5px', fontWeight: 'bold' }}>From Quote Req</div>
         </div>
         <div className="classic-card kpi-card">
           <div style={{ fontSize: '13px', color: '#666666', fontWeight: 'bold' }}>ACTIVE PRODUCTION</div>
@@ -139,7 +146,7 @@ const AdminDashboard = () => {
 
       {/* Data Tables Area */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
-        
+
         {/* Recent Sales Orders Table */}
         <div className="classic-card">
           <div style={{ padding: '15px 20px', borderBottom: '1px solid #e5e5e5', backgroundColor: '#ffffff' }}>
@@ -155,14 +162,18 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {salesOrders.map(order => (
-                <tr key={order.id}>
-                  <td style={{ fontWeight: 'bold' }}>{order.id}</td>
-                  <td>{order.client}</td>
-                  <td>{order.date}</td>
-                  <td><span className={`status-badge ${order.badgeClass}`}>{order.status}</span></td>
-                </tr>
-              ))}
+              {salesOrders.length > 0 ? (
+                salesOrders.map(order => (
+                  <tr key={order.id}>
+                    <td style={{ fontWeight: 'bold' }}>{order.id}</td>
+                    <td>{order.client}</td>
+                    <td>{order.date}</td>
+                    <td><span className={`status-badge ${order.badgeClass}`}>{order.status}</span></td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan="4" style={{ textAlign: 'center', color: '#666' }}>No active sales orders found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -181,27 +192,23 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontWeight: 'bold' }}>PT-402</td>
-                <td>Industrial Primer</td>
-                <td><span className="status-badge badge-critical">0 Units</span></td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 'bold' }}>RM-099</td>
-                <td>Steel Sheet 5mm</td>
-                <td><span className="status-badge badge-warning">12 Units</span></td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 'bold' }}>CH-110</td>
-                <td>Binding Chemical</td>
-                <td><span className="status-badge badge-warning">5 Ltrs</span></td>
-              </tr>
+              {inventoryAlerts.length > 0 ? (
+                inventoryAlerts.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontWeight: 'bold' }}>{item.itemCode}</td>
+                    <td>{item.description}</td>
+                    <td><span className={`status-badge ${item.badgeClass}`}>{item.level}</span></td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan="3" style={{ textAlign: 'center', color: '#666' }}>Inventory levels optimal.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
 
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
