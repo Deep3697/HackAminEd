@@ -88,7 +88,7 @@ const processCommand = async (req, res) => {
 
   } catch (err) {
     console.error("❌ Groq API Error:", err.message);
-    res.json({ reply: `System Error: ${err.message}` });
+    res.status(500).json({ reply: "Sorry, I encountered an issue. Please try again later." });
   }
 };
 
