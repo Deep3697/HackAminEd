@@ -214,14 +214,9 @@ const HomePage = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px' }}>
           <div className="feature-card">
-            <div style={{ width: '50px', height: '50px', backgroundColor: '#fff4eb', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>💬</div>
-            <h4 style={{ color: '#14213d', fontSize: '24px', fontWeight: '900', margin: 0, lineHeight: '1.2' }}>Two-Way <br />WhatsApp Bot</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '14px', margin: 0 }}>Send automated payment reminders and allow customers to instantly check their Sale Order status simply by messaging your business number.</p>
-          </div>
-          <div className="feature-card">
-            <div style={{ width: '50px', height: '50px', backgroundColor: '#fff4eb', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>📸</div>
-            <h4 style={{ color: '#14213d', fontSize: '24px', fontWeight: '900', margin: 0, lineHeight: '1.2' }}>Smart Receipt Scanner</h4>
-            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '14px', margin: 0 }}>Avoid manual typing. Snap a picture of a vendor invoice and let our OCR text extraction instantly pull taxable values and GST for quick entry.</p>
+            <div style={{ width: '50px', height: '50px', backgroundColor: '#fff4eb', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>🤖</div>
+            <h4 style={{ color: '#14213d', fontSize: '24px', fontWeight: '900', margin: 0, lineHeight: '1.2' }}>Intelligent<br />AI Bot</h4>
+            <p style={{ color: '#666', lineHeight: '1.6', fontSize: '14px', margin: 0 }}>Chat with our intelligent AI Bot to quickly find information, automate tasks, and get real-time assistance tailored to your business operations.</p>
           </div>
           <div className="feature-card">
             <div style={{ width: '50px', height: '50px', backgroundColor: '#fff4eb', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>⚙️</div>
@@ -240,7 +235,7 @@ const HomePage = () => {
       <footer style={{ backgroundColor: '#ffffff', borderTop: '1px solid #e5e5e5', padding: '30px 50px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', zIndex: 20 }}>
         <div style={{ color: '#888' }}>&copy; {new Date().getFullYear()} Telos Industrial ERP. All rights reserved.</div>
         <div style={{ fontWeight: '800', letterSpacing: '0.5px', color: '#14213d', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          Made with <svg width="16" height="16" viewBox="0 0 24 24" fill="#fca311" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> by Code killers
+          Made with <svg width="16" height="16" viewBox="0 0 24 24" fill="#fca311" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg> by Code killers
         </div>
         <div style={{ display: 'flex', gap: '30px' }}>
           <a href="#" className="footer-link">Terms & Conditions</a>
@@ -263,7 +258,7 @@ const HomePage = () => {
               Telos is the central nervous system for modern manufacturing. Built as a comprehensive 13-module powerhouse, we bridge the gap between your busy factory floor and your final financial statements.
             </p>
             <p style={{ color: '#555', lineHeight: '1.8', fontSize: '16px' }}>
-              We don't just record data; we actively work for you. From our AI-driven OCR receipt scanning to our predictive "Reverse Explosion" mathematics, we eliminate the guesswork from your supply chain, allowing you to build your legacy with precision and speed.
+              We don't just record data; we actively work for you. From our intelligent AI Bot assistance to our predictive "Reverse Explosion" mathematics, we eliminate the guesswork from your supply chain, allowing you to build your legacy with precision and speed.
             </p>
           </div>
         </div>
@@ -289,7 +284,7 @@ const HomePage = () => {
             <div className="faq-answer">We enforce standard checks at every critical stage: Incoming goods (IQC), during live production (PQC), and a final audit before dispatch (PDI), ensuring nothing leaves the floor without approval.</div>
 
             <div className="faq-question">Can it send automated reminders to clients?</div>
-            <div className="faq-answer">Absolutely. Our Sales Hub integrates directly with a Two-Way WhatsApp bot and email triggers to automatically chase down pending payments and update clients on their dispatch status.</div>
+            <div className="faq-answer">Absolutely. Our Sales Hub integrates directly with an intelligent AI Bot and email triggers to automatically chase down pending payments and update clients on their dispatch status.</div>
           </div>
         </div>
       )}

@@ -116,6 +116,16 @@ async function initDatabase() {
         UNIQUE(employee_id, payment_cycle)
       );
 
+      -- 1b. Daily Attendance (Per-day tracking)
+      CREATE TABLE IF NOT EXISTS daily_attendance (
+        id SERIAL PRIMARY KEY,
+        employee_id INTEGER REFERENCES person(id) ON DELETE CASCADE,
+        attendance_date DATE NOT NULL,
+        status VARCHAR(20) DEFAULT 'present',
+        marked_by INTEGER REFERENCES person(id),
+        UNIQUE(employee_id, attendance_date)
+      );
+
       -- 2. Payroll & Payslip Record
       CREATE TABLE IF NOT EXISTS payroll_record (
         id SERIAL PRIMARY KEY,

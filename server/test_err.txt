@@ -1,0 +1,14 @@
+Error: Cannot find module 'node-cron'
+Require stack:
+- e:\HackAminEd\server\src\jobs\reminderJob.js
+- e:\HackAminEd\server\test_require.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1455:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1065:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1070:22)
+    at Module._load (node:internal/modules/cjs/loader:1241:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1555:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (e:\HackAminEd\server\src\jobs\reminderJob.js:1:14)
+    at Module._compile (node:internal/modules/cjs/loader:1811:14)
+    at Object..js (node:internal/modules/cjs/loader:1942:10)

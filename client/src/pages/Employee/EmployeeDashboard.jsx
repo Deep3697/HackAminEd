@@ -7,8 +7,8 @@ const EmployeeDashboard = () => {
   const { user } = useAuth(); // Gets the logged-in employee
 
   // Fallback if employeeType isn't set
-  const department = user?.employeeType && user.employeeType !== '-' 
-    ? user.employeeType 
+  const department = user?.employeeType && user.employeeType !== '-'
+    ? user.employeeType
     : 'General Operations';
 
   // --- DYNAMIC CONFIGURATION DICTIONARY ---
@@ -18,7 +18,8 @@ const EmployeeDashboard = () => {
       hubs: [
         { name: 'Sales Hub', path: '/sales', icon: '📈' },
         { name: 'Purchase Hub', path: '/purchase', icon: '🛒' },
-        { name: 'Reports', path: '/reports', icon: '📊' }
+        { name: 'Reports', path: '/reports', icon: '📊' },
+        { name: 'Simulation Tool', path: '/simulation', icon: '🧪' }
       ],
       tasks: [
         { id: 'PO-992', title: 'Approve Vendor Purchase Order', status: 'Urgent' },
@@ -51,7 +52,8 @@ const EmployeeDashboard = () => {
       hubs: [
         { name: 'Production Hub', path: '/production', icon: '⚙️' },
         { name: 'Quality Hub', path: '/quality', icon: '🔬' },
-        { name: 'Maintenance', path: '/maintenance', icon: '🔧' }
+        { name: 'Maintenance', path: '/maintenance', icon: '🔧' },
+        { name: 'Simulation Tool', path: '/simulation', icon: '🧪' }
       ],
       tasks: [
         { id: 'PR-882', title: 'Review Job Card #882', status: 'Normal' },
@@ -113,7 +115,7 @@ const EmployeeDashboard = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
-        
+
         {/* Left Column: Dynamic Modules */}
         <div>
           <h3 style={{ color: '#14213d', marginBottom: '20px', fontSize: '18px', fontWeight: '700' }}>Your Core Modules</h3>
@@ -130,9 +132,9 @@ const EmployeeDashboard = () => {
             <h3 style={{ margin: '0 0 15px 0', color: '#14213d', fontSize: '16px', fontWeight: '800' }}>📢 Department Announcements</h3>
             <p style={{ color: '#4f46e5', fontSize: '14px', lineHeight: '1.6', fontWeight: '600', margin: 0 }}>
               {department === 'HR & Payroll' ? "Reminder: End-of-month appraisals are due this Friday." :
-               department === 'Transport & Logistics' ? "Weather alert: Expect delays on northern delivery routes tomorrow." :
-               department === 'Production & Quality' ? "Machine #4 is scheduled for preventive maintenance at 14:00." :
-               "Quarterly review meeting is scheduled for next week. Please prepare your departmental reports."}
+                department === 'Transport & Logistics' ? "Weather alert: Expect delays on northern delivery routes tomorrow." :
+                  department === 'Production & Quality' ? "Machine #4 is scheduled for preventive maintenance at 14:00." :
+                    "Quarterly review meeting is scheduled for next week. Please prepare your departmental reports."}
             </p>
           </div>
         </div>
@@ -145,7 +147,7 @@ const EmployeeDashboard = () => {
               {currentView.tasks.length} New
             </span>
           </div>
-          
+
           {currentView.tasks.map((task, idx) => (
             <div key={idx} className="task-row">
               <div>

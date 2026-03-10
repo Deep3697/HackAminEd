@@ -2,6 +2,68 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/AuthContext';
 
+// ============================================================================
+// PDF GENERATION UTILITY — Browser-native print approach with company branding
+// ============================================================================
+const generatePDF = (title, content) => {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups for PDF export.');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${title} — Telos ERP</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; }
+        .header { background: #14213d; color: #fff; padding: 30px; margin: -40px -40px 30px -40px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; font-weight: 900; }
+        .header .subtitle { font-size: 12px; color: #fca311; font-weight: bold; text-transform: uppercase; }
+        .header .date { text-align: right; font-size: 11px; color: rgba(255,255,255,0.7); }
+        .section-title { font-size: 16px; font-weight: 800; color: #14213d; margin: 20px 0 10px 0; padding-bottom: 8px; border-bottom: 2px solid #fca311; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 12px; }
+        th { background: #14213d; color: #fff; padding: 10px 12px; text-align: left; font-size: 10px; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        .metric { display: inline-block; margin: 5px 15px 5px 0; font-size: 13px; }
+        .metric .label { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; }
+        .metric .value { font-size: 18px; font-weight: 900; color: #14213d; }
+        .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 10px; color: #888; text-align: center; }
+        .status-ok { color: #2e7d32; font-weight: bold; }
+        .status-deficit { color: #c62828; font-weight: bold; }
+        @media print { 
+          body { padding: 20px; } 
+          .header { margin: -20px -20px 20px -20px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <h1>Telos ERP</h1>
+          <div class="subtitle">${title}</div>
+        </div>
+        <div class="date">
+          Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>
+          Time: ${new Date().toLocaleTimeString('en-IN')}
+        </div>
+      </div>
+      ${content}
+      <div class="footer">
+        This is a system-generated document from Telos ERP. Confidential & proprietary.
+      </div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  setTimeout(() => { printWindow.print(); }, 500);
+};
+
 // ==============================================================================
 // 1. ADMIN & PRODUCTION LEAD VIEW (Full Control + History + Indents)
 // ==============================================================================
@@ -13,10 +75,12 @@ const AdminSimulationView = ({ user, token }) => {
   const [error, setError] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [historyLogs, setHistoryLogs] = useState([]);
+  const [creatingIndent, setCreatingIndent] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
   const fetchHistory = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
       const res = await fetch(`${API_URL}/simulation/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -56,8 +120,6 @@ const AdminSimulationView = ({ user, token }) => {
     setError(null);
 
     try {
-      // FIXED PORT TO 5000
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
       const response = await fetch(`${API_URL}/simulation/explode`, {
         method: 'POST',
         headers: {
@@ -68,13 +130,12 @@ const AdminSimulationView = ({ user, token }) => {
       });
 
       if (!response.ok) throw new Error('Simulation failed. Ensure dummy data is in the database.');
-
       const data = await response.json();
 
       setTimeout(() => {
         setResults(data);
         setIsSimulating(false);
-        fetchHistory(); // Refresh logs
+        fetchHistory();
       }, 600);
     } catch (err) {
       setError(err.message);
@@ -82,10 +143,105 @@ const AdminSimulationView = ({ user, token }) => {
     }
   };
 
+  // --- CREATE REAL PURCHASE INDENT (sends to Sales & Purchase Hub) ---
   const handleIndentSubmit = async (e) => {
     e.preventDefault();
-    alert(`Purchase Indent for ₹${procurementGap.toLocaleString()} has been routed to the Commercial Hub.`);
-    setActiveModal(null);
+    setCreatingIndent(true);
+    try {
+      // Create a purchase order for each deficit material
+      for (const item of deficitItems) {
+        await fetch(`${API_URL}/commercial/purchases`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            vendor: 'Auto-Generated (Simulation)',
+            item: `${item.materialName} — ${item.shortfall} ${item.unit}`,
+            amount: item.estCost,
+            department: user?.employeeType || 'Simulation Hub'
+          })
+        });
+      }
+      alert(`✅ ${deficitItems.length} Purchase Indent(s) totaling ₹${procurementGap.toLocaleString()} have been sent to the Sales & Purchase Hub for admin approval.`);
+      setActiveModal(null);
+    } catch (err) {
+      alert('Failed to create purchase indent: ' + err.message);
+    } finally {
+      setCreatingIndent(false);
+    }
+  };
+
+  // --- EXPORT SIMULATION PDF ---
+  const handleExportPDF = () => {
+    if (!results) {
+      alert('Please run the simulation first before exporting PDF.');
+      return;
+    }
+
+    const targetName = targetItemId == 1 ? 'Swift Car (Industrial Model)' : 'Standard Turbine Assembly';
+
+    let tableRows = results.materialsNeeded.map(item => `
+      <tr>
+        <td style="font-weight:bold">${item.materialName}</td>
+        <td>${item.requiredQty} ${item.unit}</td>
+        <td>${item.currentStock} ${item.unit}</td>
+        <td class="${item.shortfall > 0 ? 'status-deficit' : ''}">${item.shortfall > 0 ? item.shortfall : '0'} ${item.unit}</td>
+        <td class="${item.status === 'Shortfall' ? 'status-deficit' : 'status-ok'}">${item.status.toUpperCase()}</td>
+      </tr>
+    `).join('');
+
+    const content = `
+      <div class="section-title">Simulation Parameters</div>
+      <div class="metric"><div class="label">Target Product</div><div class="value">${targetName}</div></div>
+      <div class="metric"><div class="label">Batch Quantity</div><div class="value">${results.targetQuantity} Units</div></div>
+      <div class="metric"><div class="label">Total Labor</div><div class="value">${results.totalManHours} Hrs</div></div>
+      <div class="metric"><div class="label">Inventory Feasibility</div><div class="value">${feasibility}%</div></div>
+      
+      <div class="section-title">Material Deficit Ledger</div>
+      <table>
+        <thead><tr><th>Material</th><th>Required</th><th>Available</th><th>Shortfall</th><th>Status</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      
+      <div class="section-title">Procurement Summary</div>
+      <div class="metric"><div class="label">Est. Procurement Gap</div><div class="value" style="color:#c62828">₹${procurementGap.toLocaleString()}</div></div>
+      <div class="metric"><div class="label">Deficit Items</div><div class="value">${deficitItems.length}</div></div>
+      <div class="metric"><div class="label">Simulated By</div><div class="value">${user?.fullName || 'Admin'}</div></div>
+    `;
+
+    generatePDF('Reverse Explosion Simulation Report', content);
+  };
+
+  // --- EXPORT HISTORY PDF ---
+  const handleExportHistoryPDF = () => {
+    if (historyLogs.length === 0) {
+      alert('No history logs to export.');
+      return;
+    }
+
+    let tableRows = historyLogs.map(log => `
+      <tr>
+        <td>${new Date(log.simulated_at).toLocaleDateString('en-IN')}</td>
+        <td style="font-weight:bold">${log.item_name}</td>
+        <td>${log.target_qty} Units</td>
+        <td class="${parseFloat(log.procurement_gap) > 0 ? 'status-deficit' : 'status-ok'}">₹${parseFloat(log.procurement_gap).toLocaleString()}</td>
+        <td>${log.user_name}</td>
+      </tr>
+    `).join('');
+
+    const content = `
+      <div class="section-title">Simulation Audit Log</div>
+      <p style="font-size:12px;color:#666;margin-bottom:15px">Complete history of all reverse explosion simulations performed in the system.</p>
+      <table>
+        <thead><tr><th>Date</th><th>Target Item</th><th>Qty</th><th>Deficit Cost</th><th>Performed By</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div style="margin-top:20px;font-size:12px;color:#888;">Total records: ${historyLogs.length}</div>
+    `;
+
+    generatePDF('Simulation Audit History', content);
   };
 
   return (
@@ -97,7 +253,22 @@ const AdminSimulationView = ({ user, token }) => {
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button onClick={() => setActiveModal('history')} style={{ background: '#fff', color: '#14213d', border: '2px solid #14213d', padding: '10px 20px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>VIEW LOG HISTORY</button>
-          <button onClick={() => alert('Exporting PDF...')} style={{ background: '#14213d', color: '#fff', border: 'none', padding: '10px 20px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>EXPORT PDF</button>
+          <button
+            onClick={handleExportPDF}
+            disabled={!results}
+            style={{
+              background: results ? '#14213d' : '#999',
+              color: '#fff',
+              border: 'none',
+              padding: '10px 20px',
+              fontWeight: 'bold',
+              borderRadius: '4px',
+              cursor: results ? 'pointer' : 'not-allowed',
+              opacity: results ? 1 : 0.6
+            }}
+          >
+            EXPORT PDF
+          </button>
         </div>
       </div>
 
@@ -186,7 +357,7 @@ const AdminSimulationView = ({ user, token }) => {
             <form className="form-body" onSubmit={handleIndentSubmit}>
               <div style={{ background: '#fff3e0', padding: '15px', borderRadius: '4px', border: '1px solid #fca311', marginBottom: '20px' }}>
                 <h4 style={{ margin: '0 0 5px 0', color: '#e65100', fontSize: '14px' }}>Auto-Generated Gap Analysis</h4>
-                <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>Requesting purchase for <b>{deficitItems.length}</b> missing materials.</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>Requesting purchase for <b>{deficitItems.length}</b> missing materials. These will be sent to the <strong>Sales & Purchase Hub</strong> as real purchase orders for admin approval.</p>
               </div>
               <table className="req-table" style={{ marginBottom: '20px', border: '1px solid #eee' }}>
                 <thead><tr><th>DEFICIT MATERIAL</th><th>QTY TO ORDER</th><th>EST. COST</th></tr></thead>
@@ -201,7 +372,7 @@ const AdminSimulationView = ({ user, token }) => {
                 </tbody>
               </table>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
-                <button type="submit" style={{ flex: 1, padding: '12px', background: '#14213d', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>SEND TO PURCHASE HUB</button>
+                <button type="submit" disabled={creatingIndent} style={{ flex: 1, padding: '12px', background: '#14213d', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>{creatingIndent ? 'Creating Orders...' : 'SEND TO PURCHASE HUB'}</button>
                 <button type="button" onClick={() => setActiveModal(null)} style={{ padding: '12px 20px', background: '#e5e5e5', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>CANCEL</button>
               </div>
             </form>
@@ -212,7 +383,18 @@ const AdminSimulationView = ({ user, token }) => {
       {activeModal === 'history' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-box modal-box-wide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" style={{ background: '#14213d' }}><h3>Simulation Audit Log</h3><button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button></div>
+            <div className="modal-header" style={{ background: '#14213d' }}>
+              <h3>Simulation Audit Log</h3>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button
+                  onClick={handleExportHistoryPDF}
+                  style={{ background: '#fca311', color: '#14213d', border: 'none', padding: '6px 14px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}
+                >
+                  EXPORT AS PDF
+                </button>
+                <button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button>
+              </div>
+            </div>
             <div className="form-body" style={{ padding: 0, maxHeight: '400px', overflowY: 'auto' }}>
               {historyLogs.length === 0 ? (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>No simulation history recorded yet.</div>
@@ -371,8 +553,10 @@ const SimulationHub = () => {
 
   const safeRole = user?.role?.toLowerCase() || '';
   const isAdmin = safeRole === 'admin';
-  const isProdLead = user?.employeeType === 'Production & Quality Lead';
+  const isProdLead = user?.employeeType === 'Production & Quality Lead' || user?.employeeType === 'Production & Quality';
+  const isSalesPurchase = user?.employeeType === 'Sales & Purchase';
 
+  // Allow: admin, production leads, and sales & purchase managers
   if (safeRole === 'contractor' || safeRole === 'user') {
     return (
       <div style={{ padding: '80px', textAlign: 'center', flex: 1, backgroundColor: '#f8f9fa' }}>
@@ -411,7 +595,7 @@ const SimulationHub = () => {
         `}
       </style>
 
-      {isAdmin || isProdLead ? <AdminSimulationView user={user} token={token} /> : <StaffSimulationView user={user} token={token} />}
+      {isAdmin || isProdLead || isSalesPurchase ? <AdminSimulationView user={user} token={token} /> : <StaffSimulationView user={user} token={token} />}
     </div>
   );
 };

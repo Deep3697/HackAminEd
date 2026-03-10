@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../store/AuthContext';
-import API from '../../services/api'; 
+import API from '../../services/api';
 
 const SalesPurchaseHub = () => {
-  const { user } = useAuth(); 
-  
+  const { user } = useAuth();
+
   // --- SECURITY LOGIC ---
   const isAdmin = user?.role === 'admin';
   const isSalesTeam = isAdmin || user?.employeeType === 'Sales & Purchase';
 
   // --- 1. LIVE DATA STATES ---
-  // These start empty and will be filled by the database!
   const [salesOrders, setSalesOrders] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
 
@@ -19,15 +18,18 @@ const SalesPurchaseHub = () => {
   const [inquiryForm, setInquiryForm] = useState({ client: '', amount: '', product: '' });
   const [indentForm, setIndentForm] = useState({ vendor: '', amount: '', item: '' });
 
+  // --- GST & Trends States ---
+  const [gstVendors, setGstVendors] = useState([]);
+  const [trendData, setTrendData] = useState(null);
+  const chartCanvasRef = useRef(null);
+
   // --- 3. DATABASE FETCHING LOGIC ---
   const fetchCommercialData = async () => {
     try {
-      // Fetch both sales and purchases at the same time
       const [salesRes, purchaseRes] = await Promise.all([
         API.get('/commercial/sales'),
         API.get('/commercial/purchases')
       ]);
-
       if (salesRes.data.success) setSalesOrders(salesRes.data.sales);
       if (purchaseRes.data.success) setPurchaseOrders(purchaseRes.data.purchases);
     } catch (error) {
@@ -35,27 +37,23 @@ const SalesPurchaseHub = () => {
     }
   };
 
-  // Run the fetch function when the page loads
   useEffect(() => {
     fetchCommercialData();
   }, []);
 
-  // --- DATA FILTERING (Same as before) ---
+  // --- DATA FILTERING ---
   const visibleSalesOrders = isAdmin ? salesOrders : salesOrders.filter(order => order.rep === (user?.fullName || 'Current User'));
   const visiblePurchaseOrders = isAdmin ? purchaseOrders : purchaseOrders.filter(order => order.createdBy === (user?.fullName || 'Current User'));
 
-
   // --- 4. LIVE FORM HANDLERS ---
-  
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await API.post('/commercial/sales', inquiryForm);
-      
       if (response.data.success) {
         setInquiryForm({ client: '', amount: '', product: '' });
         setActiveModal(null);
-        fetchCommercialData(); // Refresh the table to show the new data!
+        fetchCommercialData();
       }
     } catch (error) {
       alert("Error saving inquiry.");
@@ -69,11 +67,10 @@ const SalesPurchaseHub = () => {
         ...indentForm,
         department: user?.employeeType || 'General Operations'
       });
-      
       if (response.data.success) {
         setIndentForm({ vendor: '', amount: '', item: '' });
         setActiveModal(null);
-        fetchCommercialData(); // Refresh the table
+        fetchCommercialData();
       }
     } catch (error) {
       alert("Error saving purchase indent.");
@@ -83,9 +80,7 @@ const SalesPurchaseHub = () => {
   const handleAdminApprove = async (poId) => {
     try {
       const response = await API.put(`/commercial/purchases/${poId}/approve`);
-      
       if (response.data.success) {
-        // Optimistically update the UI so it feels instantaneous
         setPurchaseOrders(purchaseOrders.map(po => po.id === poId ? { ...po, status: 'Approved' } : po));
       }
     } catch (error) {
@@ -93,11 +88,170 @@ const SalesPurchaseHub = () => {
     }
   };
 
+  // --- NEW: REJECT HANDLER (Admin Only) ---
+  const handleAdminReject = async (poId) => {
+    if (!window.confirm('Are you sure you want to reject this purchase order?')) return;
+    try {
+      const response = await API.put(`/commercial/purchases/${poId}/reject`);
+      if (response.data.success) {
+        setPurchaseOrders(purchaseOrders.map(po => po.id === poId ? { ...po, status: 'Rejected' } : po));
+      }
+    } catch (error) {
+      alert("Error rejecting order.");
+    }
+  };
+
+  // --- NEW: CANCEL HANDLER (Employee cancels own order) ---
+  const handleCancelOrder = async (poId) => {
+    if (!window.confirm('Are you sure you want to cancel this purchase order?')) return;
+    try {
+      const response = await API.put(`/commercial/purchases/${poId}/cancel`);
+      if (response.data.success) {
+        setPurchaseOrders(purchaseOrders.map(po => po.id === poId ? { ...po, status: 'Cancelled' } : po));
+      }
+    } catch (error) {
+      alert("Error cancelling order. You may not have permission.");
+    }
+  };
+
+  // --- FETCH GST FILINGS ---
+  const fetchGstFilings = async () => {
+    try {
+      const res = await API.get('/commercial/gst-filings');
+      if (res.data.success) setGstVendors(res.data.vendors);
+    } catch (err) {
+      console.error("Error fetching GST filings:", err);
+    }
+  };
+
+  // --- FETCH TREND ANALYTICS ---
+  const fetchTrendAnalytics = async () => {
+    try {
+      const res = await API.get('/commercial/trend-analytics');
+      if (res.data.success) setTrendData(res.data);
+    } catch (err) {
+      console.error("Error fetching trend analytics:", err);
+    }
+  };
+
+  // --- DRAW CHART ---
+  const drawChart = useCallback(() => {
+    if (!trendData || !chartCanvasRef.current) return;
+    const canvas = chartCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Merge months from both datasets
+    const allMonths = new Set([
+      ...(trendData.salesByMonth || []).map(s => s.month),
+      ...(trendData.purchaseByMonth || []).map(p => p.month)
+    ]);
+    const months = Array.from(allMonths).reverse().slice(-8);
+
+    if (months.length === 0) {
+      ctx.fillStyle = '#888';
+      ctx.font = '14px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data available to chart', W / 2, H / 2);
+      return;
+    }
+
+    const salesMap = {};
+    const purchaseMap = {};
+    (trendData.salesByMonth || []).forEach(s => { salesMap[s.month] = s.total; });
+    (trendData.purchaseByMonth || []).forEach(p => { purchaseMap[p.month] = p.total; });
+
+    const salesValues = months.map(m => salesMap[m] || 0);
+    const purchaseValues = months.map(m => purchaseMap[m] || 0);
+
+    const maxVal = Math.max(...salesValues, ...purchaseValues, 1);
+    const padding = { top: 30, bottom: 60, left: 80, right: 30 };
+    const chartW = W - padding.left - padding.right;
+    const chartH = H - padding.top - padding.bottom;
+
+    // Draw grid
+    ctx.strokeStyle = '#eee';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding.top + (chartH / 5) * i;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(W - padding.right, y);
+      ctx.stroke();
+
+      const val = Math.round(maxVal - (maxVal / 5) * i);
+      ctx.fillStyle = '#888';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText('₹' + val.toLocaleString(), padding.left - 8, y + 4);
+    }
+
+    // Draw bars
+    const groupWidth = chartW / months.length;
+    const barWidth = groupWidth * 0.3;
+    const barGap = 4;
+
+    months.forEach((month, i) => {
+      const x = padding.left + groupWidth * i + groupWidth * 0.15;
+
+      // Sales bar
+      const sH = (salesValues[i] / maxVal) * chartH;
+      ctx.fillStyle = '#27ae60';
+      ctx.fillRect(x, padding.top + chartH - sH, barWidth, sH);
+
+      // Purchase bar
+      const pH = (purchaseValues[i] / maxVal) * chartH;
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(x + barWidth + barGap, padding.top + chartH - pH, barWidth, pH);
+
+      // Month label
+      ctx.fillStyle = '#555';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(month, x + barWidth + barGap / 2, H - padding.bottom + 20);
+    });
+
+    // Legend
+    ctx.fillStyle = '#27ae60';
+    ctx.fillRect(padding.left, 8, 12, 12);
+    ctx.fillStyle = '#333';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Sales', padding.left + 16, 18);
+
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(padding.left + 70, 8, 12, 12);
+    ctx.fillStyle = '#333';
+    ctx.fillText('Purchase', padding.left + 86, 18);
+  }, [trendData]);
+
+  useEffect(() => {
+    if (activeModal === 'trends' && trendData) {
+      setTimeout(drawChart, 100);
+    }
+  }, [activeModal, trendData, drawChart]);
+
+  // Status color helper
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending Quote': return { background: '#fff3e0', color: '#e65100' };
+      case 'Confirmed': case 'Approved': return { background: '#e8f5e9', color: '#2e7d32' };
+      case 'Processing': return { background: '#e3f2fd', color: '#1565c0' };
+      case 'Delivered': return { background: '#e8f5e9', color: '#2e7d32' };
+      case 'Awaiting Auth': return { background: '#ffebee', color: '#c62828' };
+      case 'Rejected': return { background: '#ffcdd2', color: '#b71c1c' };
+      case 'Cancelled': return { background: '#f5f5f5', color: '#757575' };
+      default: return { background: '#fff3e0', color: '#e65100' };
+    }
+  };
+
   // Helper to calculate totals for the Revenue Summary
   const calculateTotal = (ordersArray) => {
     return ordersArray.reduce((total, order) => {
-      // Remove the '₹' and commas to do math, then add them back
-      const num = Number(order.amount.replace(/[^0-9.-]+/g,""));
+      const num = Number(order.amount.replace(/[^0-9.-]+/g, ""));
       return total + num;
     }, 0);
   };
@@ -106,9 +260,34 @@ const SalesPurchaseHub = () => {
   const totalPurchase = calculateTotal(visiblePurchaseOrders);
   const netMargin = totalSales - totalPurchase;
 
+  // --- RENDER PO ACTION BUTTONS ---
+  const renderPoActions = (order) => {
+    if (order.status !== 'Awaiting Auth') return null;
+
+    return (
+      <span style={{ display: 'inline-flex', gap: '4px', marginLeft: '8px' }}>
+        {isAdmin && (
+          <>
+            <button className="admin-approve-btn" onClick={() => handleAdminApprove(order.id)}>
+              ✓ APPROVE
+            </button>
+            <button className="admin-reject-btn" onClick={() => handleAdminReject(order.id)}>
+              ✗ REJECT
+            </button>
+          </>
+        )}
+        {!isAdmin && (
+          <button className="cancel-order-btn" onClick={() => handleCancelOrder(order.id)}>
+            ✕ CANCEL
+          </button>
+        )}
+      </span>
+    );
+  };
+
   return (
     <div style={{ padding: '30px 40px', flex: 1, backgroundColor: '#e5e5e5', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      
+
       <style>
         {`
           @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -134,8 +313,12 @@ const SalesPurchaseHub = () => {
           .utility-card { display: flex; align-items: center; padding: 20px; gap: 20px; background: #fff; border: 1px solid rgba(20, 33, 61, 0.08); border-radius: 12px; flex: 1; transition: all 0.4s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
           
           .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #fff; }
-          .admin-approve-btn { background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; margin-left: 10px; transition: 0.2s; }
+          .admin-approve-btn { background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
           .admin-approve-btn:hover { background: #219653; transform: scale(1.05); }
+          .admin-reject-btn { background: #c0392b; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+          .admin-reject-btn:hover { background: #a93226; transform: scale(1.05); }
+          .cancel-order-btn { background: #e67e22; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+          .cancel-order-btn:hover { background: #d35400; transform: scale(1.05); }
           
           .action-link { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg, #f0f3f8 0%, #e8ecf2 100%); text-align: center; border: none; cursor: pointer; color: #14213d; font-weight: bold; font-size: 12px; }
           
@@ -156,9 +339,9 @@ const SalesPurchaseHub = () => {
         <div>
           <h2 style={{ color: '#14213d', margin: '0', fontSize: '28px', fontWeight: '900' }}>Commercial Hub</h2>
           <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
-            {isAdmin ? "Global Enterprise Overview" : 
-             isSalesTeam ? `Sales & Procurement Pipeline (${user?.fullName})` : 
-             `${user?.employeeType} Department Procurement`}
+            {isAdmin ? "Global Enterprise Overview" :
+              isSalesTeam ? `Sales & Procurement Pipeline (${user?.fullName})` :
+                `${user?.employeeType} Department Procurement`}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '15px' }}>
@@ -173,7 +356,7 @@ const SalesPurchaseHub = () => {
         </div>
       </div>
 
-      {/* --- REVENUE SUMMARY (Dynamically Calculated) --- */}
+      {/* --- REVENUE SUMMARY --- */}
       {isSalesTeam && (
         <div className="hub-card" style={{ display: 'flex', marginBottom: '30px', borderTop: '5px solid #14213d' }}>
           <div className="stat-box">
@@ -191,7 +374,7 @@ const SalesPurchaseHub = () => {
           <div className="stat-box">
             <div className="stat-label">Pending Approvals</div>
             <div className="stat-value" style={{ color: '#fca311' }}>
-               {isAdmin ? visiblePurchaseOrders.filter(o => o.status === 'Awaiting Auth').length : 'Wait Auth'}
+              {isAdmin ? visiblePurchaseOrders.filter(o => o.status === 'Awaiting Auth').length : 'Wait Auth'}
             </div>
           </div>
         </div>
@@ -199,7 +382,7 @@ const SalesPurchaseHub = () => {
 
       {/* --- DUAL TABLES --- */}
       <div style={{ display: 'grid', gridTemplateColumns: isSalesTeam ? '1fr 1fr' : '1fr', gap: '30px', marginBottom: '30px' }}>
-        
+
         {/* SALES SECTION */}
         {isSalesTeam && (
           <div className="hub-card" style={{ borderTop: '4px solid #27ae60' }}>
@@ -223,7 +406,7 @@ const SalesPurchaseHub = () => {
                     <td>{order.client}</td>
                     <td style={{ fontWeight: 'bold' }}>{order.amount}</td>
                     <td>
-                      <span className="status-tag" style={{ background: order.status === 'Pending Quote' ? '#fff3e0' : order.status === 'Confirmed' ? '#e8f5e9' : '#e3f2fd', color: order.status === 'Pending Quote' ? '#e65100' : order.status === 'Confirmed' ? '#2e7d32' : '#1565c0' }}>
+                      <span className="status-tag" style={getStatusStyle(order.status)}>
                         {order.status}
                       </span>
                     </td>
@@ -260,14 +443,10 @@ const SalesPurchaseHub = () => {
                   <td>{order.vendor}</td>
                   <td style={{ fontWeight: 'bold' }}>{order.amount}</td>
                   <td>
-                    <span className="status-tag" style={{ background: order.status === 'Awaiting Auth' ? '#ffebee' : '#fff3e0', color: order.status === 'Awaiting Auth' ? '#c62828' : '#e65100' }}>
+                    <span className="status-tag" style={getStatusStyle(order.status)}>
                       {order.status}
                     </span>
-                    {isAdmin && order.status === 'Awaiting Auth' && (
-                      <button className="admin-approve-btn" onClick={() => handleAdminApprove(order.id)}>
-                        ✓ APPROVE
-                      </button>
-                    )}
+                    {renderPoActions(order)}
                   </td>
                 </tr>
               ))}
@@ -289,9 +468,9 @@ const SalesPurchaseHub = () => {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: '900', fontSize: '15px', color: '#14213d', marginBottom: '4px' }}>GST Compliance Score</div>
-              <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.4' }}>4 vendors are currently non-compliant. Verify GST filings before releasing funds.</div>
+              <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.4' }}>Verify vendor GST filings before releasing funds.</div>
             </div>
-            <button onClick={() => setActiveModal('gst')} style={{ background: '#14213d', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>VERIFY FILINGS</button>
+            <button onClick={() => { fetchGstFilings(); setActiveModal('gst'); }} style={{ background: '#14213d', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>VERIFY FILINGS</button>
           </div>
 
           <div className="utility-card">
@@ -300,15 +479,13 @@ const SalesPurchaseHub = () => {
               <div style={{ fontWeight: '900', fontSize: '15px', color: '#14213d', marginBottom: '4px' }}>Trade Ratio Analytics</div>
               <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.4' }}>Check real-time balance of inflow vs outflow.</div>
             </div>
-            <button onClick={() => setActiveModal('trends')} style={{ background: '#fca311', color: '#14213d', border: 'none', padding: '8px 14px', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>ANALYZE TRENDS</button>
+            <button onClick={() => { fetchTrendAnalytics(); setActiveModal('trends'); }} style={{ background: '#fca311', color: '#14213d', border: 'none', padding: '8px 14px', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>ANALYZE TRENDS</button>
           </div>
         </div>
       )}
 
-      {/* =========================================
-          ALL MODALS RENDERED BELOW THIS LINE
-          ========================================= */}
-      
+      {/* ========= ALL MODALS ========= */}
+
       {/* 1. NEW INQUIRY MODAL */}
       {activeModal === 'inquiry' && (
         <div className="modal-overlay">
@@ -320,15 +497,15 @@ const SalesPurchaseHub = () => {
             <form className="form-body" onSubmit={handleInquirySubmit}>
               <div className="form-group">
                 <label className="form-label">Client / Company Name</label>
-                <input type="text" className="form-input" required value={inquiryForm.client} onChange={(e) => setInquiryForm({...inquiryForm, client: e.target.value})} />
+                <input type="text" className="form-input" required value={inquiryForm.client} onChange={(e) => setInquiryForm({ ...inquiryForm, client: e.target.value })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Product Required</label>
-                <input type="text" className="form-input" required value={inquiryForm.product} onChange={(e) => setInquiryForm({...inquiryForm, product: e.target.value})} />
+                <input type="text" className="form-input" required value={inquiryForm.product} onChange={(e) => setInquiryForm({ ...inquiryForm, product: e.target.value })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Estimated Value (In INR)</label>
-                <input type="number" className="form-input" required value={inquiryForm.amount} onChange={(e) => setInquiryForm({...inquiryForm, amount: e.target.value})} />
+                <input type="number" className="form-input" required value={inquiryForm.amount} onChange={(e) => setInquiryForm({ ...inquiryForm, amount: e.target.value })} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
                 <button type="submit" style={{ flex: 1, padding: '12px', background: '#14213d', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>SAVE INQUIRY</button>
@@ -350,15 +527,15 @@ const SalesPurchaseHub = () => {
             <form className="form-body" onSubmit={handleIndentSubmit}>
               <div className="form-group">
                 <label className="form-label">Preferred Vendor</label>
-                <input type="text" className="form-input" required value={indentForm.vendor} onChange={(e) => setIndentForm({...indentForm, vendor: e.target.value})} />
+                <input type="text" className="form-input" required value={indentForm.vendor} onChange={(e) => setIndentForm({ ...indentForm, vendor: e.target.value })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Material Requested</label>
-                <input type="text" className="form-input" required value={indentForm.item} onChange={(e) => setIndentForm({...indentForm, item: e.target.value})} />
+                <input type="text" className="form-input" required value={indentForm.item} onChange={(e) => setIndentForm({ ...indentForm, item: e.target.value })} />
               </div>
               <div className="form-group">
                 <label className="form-label">Estimated Budget (In INR)</label>
-                <input type="number" className="form-input" required value={indentForm.amount} onChange={(e) => setIndentForm({...indentForm, amount: e.target.value})} />
+                <input type="number" className="form-input" required value={indentForm.amount} onChange={(e) => setIndentForm({ ...indentForm, amount: e.target.value })} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
                 <button type="submit" style={{ flex: 1, padding: '12px', background: '#c0392b', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>REQUEST APPROVAL</button>
@@ -398,7 +575,7 @@ const SalesPurchaseHub = () => {
                       <td style={{ fontSize: '12px' }}>{order.rep}</td>
                       <td style={{ fontWeight: 'bold' }}>{order.amount}</td>
                       <td>
-                        <span className="status-tag" style={{ background: order.status === 'Pending Quote' ? '#fff3e0' : '#e8f5e9', color: order.status === 'Pending Quote' ? '#e65100' : '#2e7d32' }}>
+                        <span className="status-tag" style={getStatusStyle(order.status)}>
                           {order.status}
                         </span>
                       </td>
@@ -443,12 +620,10 @@ const SalesPurchaseHub = () => {
                       <td style={{ fontSize: '12px' }}>{order.dept}</td>
                       <td style={{ fontWeight: 'bold' }}>{order.amount}</td>
                       <td>
-                        <span className="status-tag" style={{ background: order.status === 'Awaiting Auth' ? '#ffebee' : '#e8f5e9', color: order.status === 'Awaiting Auth' ? '#c62828' : '#2e7d32' }}>
+                        <span className="status-tag" style={getStatusStyle(order.status)}>
                           {order.status}
                         </span>
-                        {isAdmin && order.status === 'Awaiting Auth' && (
-                          <button className="admin-approve-btn" onClick={() => handleAdminApprove(order.id)}>✓ APPROVE</button>
-                        )}
+                        {renderPoActions(order)}
                       </td>
                     </tr>
                   ))}
@@ -462,56 +637,79 @@ const SalesPurchaseHub = () => {
         </div>
       )}
 
-      {/* 5. GST COMPLIANCE MODAL (Admin Only Actions) */}
-      {activeModal === 'gst' && isAdmin && (
+      {/* 5. GST COMPLIANCE MODAL - REAL DATA */}
+      {activeModal === 'gst' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box" style={{ width: '600px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>⚠️ Compliance Alert: Non-Compliant Vendors</h3>
+              <h3>⚠️ GST Compliance: Vendor Filing Status</h3>
               <button className="close-btn" onClick={() => setActiveModal(null)}>&times;</button>
             </div>
-            <div className="form-body">
-              <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>The following vendors have not filed their recent GST returns. Holding their payments is advised.</p>
-              
-              <div style={{ padding: '12px', borderLeft: '4px solid #c0392b', background: '#f8f9fa', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div><strong style={{ display: 'block', color: '#14213d' }}>Omega Logistics</strong><span style={{ fontSize: '11px', color: '#c0392b' }}>Inactive since Aug 2023</span></div>
-                <button style={{ background: '#14213d', color: '#fff', border: 'none', padding: '5px 10px', fontSize: '10px', borderRadius: '3px', cursor: 'pointer' }}>HOLD PAYMENT</button>
-              </div>
+            <div className="form-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>Real-time vendor compliance data pulled from your purchase order records.</p>
+
+              {gstVendors.length === 0 ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#888' }}>No vendor data found.</div>
+              ) : (
+                gstVendors.map((vendor, index) => (
+                  <div key={index} style={{ padding: '12px', borderLeft: `4px solid ${vendor.compliant ? '#27ae60' : '#c0392b'}`, background: '#f8f9fa', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '0 8px 8px 0' }}>
+                    <div>
+                      <strong style={{ display: 'block', color: '#14213d' }}>{vendor.vendor}</strong>
+                      <span style={{ fontSize: '11px', color: vendor.compliant ? '#27ae60' : '#c0392b' }}>
+                        {vendor.compliant ? '✅ Compliant' : '⚠️ Non-Compliant'} — Last Order: {vendor.lastOrderDate}
+                      </span>
+                      <br />
+                      <span style={{ fontSize: '10px', color: '#888' }}>
+                        {vendor.totalOrders} orders ({vendor.approvedOrders} approved)
+                      </span>
+                    </div>
+                    {!vendor.compliant && isAdmin && (
+                      <button style={{ background: '#14213d', color: '#fff', border: 'none', padding: '5px 10px', fontSize: '10px', borderRadius: '3px', cursor: 'pointer' }}>HOLD PAYMENT</button>
+                    )}
+                  </div>
+                ))
+              )}
               <button onClick={() => setActiveModal(null)} style={{ width: '100%', padding: '12px', marginTop: '15px', background: '#fca311', color: '#14213d', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>ACKNOWLEDGE & CLOSE</button>
             </div>
           </div>
         </div>
       )}
-      
-      {activeModal === 'gst' && !isAdmin && (
-         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-            <div className="modal-box">
-               <div className="form-body" style={{textAlign: 'center'}}>
-                 <h3 style={{color: '#c0392b'}}>Access Restricted</h3>
-                 <p>Only Administrators can place vendor payments on hold.</p>
-                 <button onClick={() => setActiveModal(null)} style={{ padding: '10px 20px', background: '#e5e5e5', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Close</button>
-               </div>
-            </div>
-         </div>
-      )}
 
-      {/* 6. ANALYZE TRENDS MODAL */}
+      {/* 6. ANALYZE TRENDS MODAL - GRAPHICAL CHARTS */}
       {activeModal === 'trends' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box" style={{ width: '750px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ background: '#fca311', color: '#14213d' }}>
-              <h3>📊 Financial Trade Ratio Analysis</h3>
+              <h3>📊 Trade Ratio Analytics — Graphical Analysis</h3>
               <button className="close-btn" style={{ color: '#14213d' }} onClick={() => setActiveModal(null)}>&times;</button>
             </div>
             <div className="form-body">
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', fontWeight: '900', color: '#27ae60' }}>
-                  {totalPurchase > 0 ? (totalSales / totalPurchase).toFixed(2) : '0.00'}x
+              {/* Summary KPIs */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '25px' }}>
+                <div style={{ textAlign: 'center', padding: '15px', background: '#e8f5e9', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#27ae60', textTransform: 'uppercase' }}>Total Sales</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#27ae60', marginTop: '4px' }}>₹{totalSales.toLocaleString()}</div>
                 </div>
-                <div style={{ fontSize: '12px', color: '#888', fontWeight: 'bold', textTransform: 'uppercase' }}>Live Revenue-to-Expense Ratio</div>
+                <div style={{ textAlign: 'center', padding: '15px', background: '#ffebee', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#c0392b', textTransform: 'uppercase' }}>Total Purchase</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#c0392b', marginTop: '4px' }}>₹{totalPurchase.toLocaleString()}</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '15px', background: '#e3f2fd', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1565c0', textTransform: 'uppercase' }}>Revenue Ratio</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#1565c0', marginTop: '4px' }}>
+                    {totalPurchase > 0 ? (totalSales / totalPurchase).toFixed(2) : '0.00'}x
+                  </div>
+                </div>
               </div>
+
+              {/* Bar Chart */}
+              <div style={{ background: '#fafbfc', border: '1px solid #eee', borderRadius: '8px', padding: '15px', marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#14213d', marginBottom: '10px', textTransform: 'uppercase' }}>Monthly Sales vs Purchase Breakdown</div>
+                <canvas ref={chartCanvasRef} width={680} height={300} style={{ width: '100%', height: '300px' }}></canvas>
+              </div>
+
               <div style={{ background: '#e8f5e9', border: '1px solid #2e7d32', padding: '15px', borderRadius: '4px', color: '#2e7d32', fontSize: '13px', lineHeight: '1.4' }}>
-                <strong>System Insight:</strong> This calculation is now pulling live data directly from your database.
+                <strong>System Insight:</strong> This analysis is generated from live data in your database, showing real monthly trends for sales and purchase orders.
               </div>
               <button onClick={() => setActiveModal(null)} style={{ width: '100%', padding: '12px', marginTop: '20px', background: '#14213d', color: '#fff', border: 'none', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}>CLOSE DASHBOARD</button>
             </div>

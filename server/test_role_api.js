@@ -9,33 +9,24 @@ const generateAdminToken = () => {
   );
 };
 
-const testUpdateRole = async () => {
+const testUpdateJob = async () => {
   try {
     const token = generateAdminToken();
-    console.log('Token Generated. Calling PUT /api/admin/users/1/role...');
+    console.log('Calling PUT /api/production/jobs/JOB-202/complete...');
 
-    const response = await fetch('http://localhost:5001/api/admin/users/1/role', {
-      method: 'PUT',
+    const axios = require('axios');
+    const response = await axios.put('http://localhost:5001/api/production/jobs/JOB-202/complete', {}, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        role: 'employee',
-        employeeType: 'HR & Payroll'
-      })
+      }
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
-    }
-
-    console.log('=== API RESPONSE ===');
-    console.log(data);
+    console.log('STATUS:', response.status);
+    console.log('BODY:', response.data);
   } catch (error) {
-    console.error('Fetch Error:', error.message);
+    console.error('Fetch Error:', error.response ? error.response.data : error.message);
   }
 };
 
-testUpdateRole();
+testUpdateJob();

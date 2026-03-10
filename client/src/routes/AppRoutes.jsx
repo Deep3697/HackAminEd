@@ -4,11 +4,11 @@ import DashboardLayout from '../components/Layouts/DashboardLayout';
 
 // Pages
 import HomePage from '../pages/Public/HomePage';
-import AuthPage from '../pages/Auth/AuthPage'; 
+import AuthPage from '../pages/Auth/AuthPage';
 import AdminDashboard from '../pages/Admin/AdminDashboard';
 import UserManagement from '../pages/Admin/UserManagement';
 import UserDashboard from '../pages/User/UserDashboard';
-import EmployeeDashboard from '../pages/Employee/EmployeeDashboard'; 
+import EmployeeDashboard from '../pages/Employee/EmployeeDashboard';
 import ContractorDashboard from '../pages/Contractor/ContractorDashboard';
 import CommandCenter from '../pages/Hubs/CommandCenter';
 
@@ -31,7 +31,7 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/auth" element={<AuthPage />} /> 
+            <Route path="/auth" element={<AuthPage />} />
 
             <Route element={<DashboardLayout />}>
                 {/* =====================================================
@@ -43,7 +43,6 @@ const AppRoutes = () => {
                 <Route element={<PrivateRoute allowedRoles={['admin']} />}>
                     <Route path="/admin" element={<CommandCenter />} />
                     <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/simulation" element={<SimulationHub />} />
                 </Route>
 
                 {/* =====================================================
@@ -60,6 +59,7 @@ const AppRoutes = () => {
                     <Route path="/statutory" element={<StatutoryHub />} />
                     <Route path="/maintenance" element={<MaintenanceHub />} />
                     <Route path="/assets" element={<AssetsHub />} />
+                    <Route path="/simulation" element={<SimulationHub />} />
                 </Route>
 
                 {/* =====================================================

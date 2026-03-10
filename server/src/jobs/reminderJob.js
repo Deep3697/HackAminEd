@@ -7,8 +7,9 @@ const pool = require('../lib/db');
 // On due date -> Payment due today reminder
 // After due date -> Overdue reminder every day (only if unpaid)
 
+
 const RUN_EVERY_MINUTE_FOR_TESTING = process.env.TEST_CRON === 'true';
-const scheduleTime = RUN_EVERY_MINUTE_FOR_TESTING ? '* * * * *' : '0 8 * * *'; // Default 8:00 AM daily
+const scheduleTime = RUN_EVERY_MINUTE_FOR_TESTING ? '* * * * *' : '0 17 * * *'; // 5:00 PM daily
 
 const initReminderJob = () => {
   console.log(`⏰ Starting invoice reminder cron job (Schedule: ${scheduleTime})`);

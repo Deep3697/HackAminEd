@@ -71,6 +71,28 @@ async function seedDemoData() {
       ('JOB-199', 'Pending Inspection', 'Check tolerances on turbine blades', (SELECT id FROM person WHERE email = 'production@telos.com' LIMIT 1)),
       ('JOB-195', 'Rework', 'Seal alignment off by 2mm', (SELECT id FROM person WHERE email = 'production@telos.com' LIMIT 1))
       ON CONFLICT (job_reference) DO NOTHING;
+
+      -- Customers for Invoice Testing
+      INSERT INTO customers (name, email, phone, contact_person) VALUES 
+      ('Deep Test Customer', 'deephirpara4@gmail.com', '9316997453', 'Deep Patel'),
+      ('Acme Corporation', 'billing@acme.com', '9876543210', 'John Doe'),
+      ('Global Metals Ltd', 'finance@globalmetals.com', '9123456789', 'Rajesh Patel'),
+      ('Reliance Projects', 'accounts@relianceproj.com', '9988776655', 'Priya Sharma'),
+      ('Resin World Industries', 'payment@resinworld.com', '9456123789', 'Vikram Singh'),
+      ('Industrial Solutions Co', 'billing@indsol.com', '9789456123', 'Neha Gupta')
+      ON CONFLICT DO NOTHING;
+
+      -- Invoices for Testing Automated Reminders
+      INSERT INTO invoices (customer_id, invoice_number, invoice_date, credit_period_days, amount, status) VALUES 
+      (1, 'INV-TEST-001', CURRENT_DATE - INTERVAL '27 days', 30, 25000.00, 'unpaid'),
+      (2, 'INV-001', CURRENT_DATE - INTERVAL '23 days', 30, 50000.00, 'unpaid'),
+      (3, 'INV-002', CURRENT_DATE - INTERVAL '27 days', 30, 75000.00, 'unpaid'),
+      (4, 'INV-003', CURRENT_DATE - INTERVAL '30 days', 30, 120000.00, 'unpaid'),
+      (5, 'INV-004', CURRENT_DATE - INTERVAL '31 days', 30, 45000.00, 'unpaid'),
+      (6, 'INV-005', CURRENT_DATE - INTERVAL '10 days', 15, 32000.00, 'unpaid'),
+      (2, 'INV-006', CURRENT_DATE, 45, 88500.00, 'unpaid'),
+      (3, 'INV-007', CURRENT_DATE - INTERVAL '1 day', 30, 62000.00, 'paid')
+      ON CONFLICT (invoice_number) DO NOTHING;
     `);
 
     console.log('✅ Demo data seeding complete.');

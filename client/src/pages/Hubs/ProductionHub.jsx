@@ -92,6 +92,50 @@ const ProductionQualityHub = () => {
     } catch (err) { alert("Server connection failed"); }
   };
 
+  const handleUpdateProgress = async (jobId, newProgress) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${API_URL}/production/jobs/${jobId}/progress`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ progress: newProgress })
+      });
+      if (res.ok) {
+        fetchDashboardData();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to update progress: ${errData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      alert(`Server connection failed: ${err.message}`);
+    }
+  };
+
+  const handleUpdateStatus = async (jobId, newStatus) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const res = await fetch(`${API_URL}/production/jobs/${jobId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        fetchDashboardData();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to update status: ${errData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      alert(`Server connection failed: ${err.message}`);
+    }
+  };
+
   const handleDowntimeSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -263,13 +307,54 @@ const ProductionQualityHub = () => {
                     <td style={{ fontWeight: 'bold' }}>{job.id}</td>
                     <td>{job.product} <br /> <small style={{ color: '#888' }}>Qty: {job.qty}</small></td>
                     <td style={{ width: '150px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 'bold' }}>{job.progress}%</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold' }}>{job.progress}%</span>
+                        {isAdmin && job.progress < 100 && (
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            defaultValue={job.progress}
+                            onBlur={(e) => {
+                              const val = Math.min(100, Math.max(0, Number(e.target.value)));
+                              if (val !== job.progress) {
+                                handleUpdateProgress(job.id, val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const val = Math.min(100, Math.max(0, Number(e.target.value)));
+                                if (val !== job.progress) handleUpdateProgress(job.id, val);
+                              }
+                            }}
+                            style={{ width: '50px', padding: '2px 4px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '11px', textAlign: 'center' }}
+                          />
+                        )}
+                      </div>
                       <div className="progress-bar-bg">
                         <div className="progress-fill" style={{ width: `${job.progress}%`, background: job.progress > 90 ? '#27ae60' : job.progress === 0 ? '#888' : '#14213d' }}></div>
                       </div>
                     </td>
                     <td>
-                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: job.status === 'Queued' ? '#fca311' : '#14213d' }}>{job.status?.toUpperCase() || 'UNKNOWN'}</span>
+                      {isAdmin && job.status !== 'Completed' ? (
+                        <select
+                          value={job.status}
+                          onChange={(e) => handleUpdateStatus(job.id, e.target.value)}
+                          style={{ padding: '4px 8px', border: '1.5px solid #14213d', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', color: '#14213d', background: '#f8f9fa', cursor: 'pointer' }}
+                        >
+                          <option value="Queued">QUEUED</option>
+                          <option value="Assembly">ASSEMBLY</option>
+                          <option value="Testing">TESTING</option>
+                          <option value="Molding">MOLDING</option>
+                          <option value="Pending">PENDING</option>
+                          <option value="In Progress">IN PROGRESS</option>
+                          <option value="Completed">COMPLETED</option>
+                        </select>
+                      ) : (
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: job.status === 'Completed' ? '#27ae60' : job.status === 'Queued' ? '#fca311' : '#14213d', textTransform: 'uppercase' }}>
+                          {job.status || 'UNKNOWN'}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

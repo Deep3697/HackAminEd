@@ -78,7 +78,7 @@ const AdminFinanceView = ({ user, token }) => {
                     <td><div style={{ fontWeight: 'bold' }}>{txn.account_head}</div><div style={{ fontSize: '11px', color: '#999' }}>{txn.payment_mode}</div></td>
                     <td>{new Date(txn.txn_date).toLocaleDateString()}</td>
                     <td style={{ color: txn.txn_type === 'Credit' ? '#27ae60' : '#c0392b', fontWeight: '900' }}>{txn.txn_type === 'Credit' ? 'CR' : 'DR'}</td>
-                    <td style={{ textAlign: 'left', fontWeight: 'bold', color: '#14213d' }}>${parseFloat(txn.amount).toLocaleString()}</td>
+                    <td style={{ textAlign: 'left', fontWeight: 'bold', color: '#14213d' }}>₹{parseFloat(txn.amount).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -206,7 +206,7 @@ const CustomerFinanceView = ({ user, token }) => {
                 <td style={{ fontWeight: 'bold', color: '#14213d' }}>{bill.bill_ref}</td>
                 <td>{bill.order_ref}</td>
                 <td>{new Date(bill.issued_at).toLocaleDateString()}</td>
-                <td style={{ fontWeight: 'bold' }}>${parseFloat(bill.amount).toLocaleString()}</td>
+                <td style={{ fontWeight: 'bold' }}>₹{parseFloat(bill.amount).toLocaleString()}</td>
                 <td><span className={`status-pill ${bill.status === 'Paid' ? 'status-completed' : 'status-pending'}`}>{bill.status}</span></td>
               </tr>
             ))}
