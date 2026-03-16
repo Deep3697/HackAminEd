@@ -15,7 +15,7 @@ const QualityHub = () => {
   const fetchQualityData = async () => {
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -54,7 +54,7 @@ const QualityHub = () => {
   const handleQcSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/qc`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

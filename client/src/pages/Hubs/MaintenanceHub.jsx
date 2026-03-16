@@ -29,7 +29,7 @@ const AdminMaintenanceView = ({ user, token }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const assetRes = await fetch(`${API_URL}/maintenance/assets`, { headers: { Authorization: `Bearer ${token}` } });
       const auditRes = await fetch(`${API_URL}/maintenance/audit`, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -50,7 +50,7 @@ const AdminMaintenanceView = ({ user, token }) => {
   const handleGenericSubmit = async (e, formType) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/maintenance/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -224,7 +224,7 @@ const StaffMaintenanceView = ({ user, token }) => {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
         const res = await fetch(`${API_URL}/maintenance/assets`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok) setAssets(data.assets || []);
@@ -237,7 +237,7 @@ const StaffMaintenanceView = ({ user, token }) => {
   const handleReportSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       await fetch(`${API_URL}/maintenance/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

@@ -25,7 +25,7 @@ const AdminHrView = ({ user, token }) => {
   // Summary KPIs
   const [summary, setSummary] = useState({ totalHeads: 0, avgAttendance: '0.0', grossTotal: '0.00', statutoryDues: '0.00' });
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
 
   const fetchPayrollData = async () => {
     setLoading(true);
@@ -311,7 +311,7 @@ const EmployeeHrView = ({ user, token }) => {
   useEffect(() => {
     const fetchMyPayslips = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
         const res = await fetch(`${API_URL}/hr/employee`, {
           headers: { Authorization: `Bearer ${token}` }
         });

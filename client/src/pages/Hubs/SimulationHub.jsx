@@ -77,7 +77,7 @@ const AdminSimulationView = ({ user, token }) => {
   const [historyLogs, setHistoryLogs] = useState([]);
   const [creatingIndent, setCreatingIndent] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
 
   const fetchHistory = async () => {
     try {
@@ -474,7 +474,7 @@ const StaffSimulationView = ({ user, token }) => {
     setIsSimulating(true);
     setError(null);
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const response = await fetch(`${API_URL}/simulation/explode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

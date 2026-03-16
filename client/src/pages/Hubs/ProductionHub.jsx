@@ -26,7 +26,7 @@ const ProductionQualityHub = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -78,7 +78,7 @@ const ProductionQualityHub = () => {
   const handleJobSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -94,7 +94,7 @@ const ProductionQualityHub = () => {
 
   const handleUpdateProgress = async (jobId, newProgress) => {
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/jobs/${jobId}/progress`, {
         method: 'PUT',
         headers: {
@@ -116,7 +116,7 @@ const ProductionQualityHub = () => {
 
   const handleUpdateStatus = async (jobId, newStatus) => {
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/jobs/${jobId}/status`, {
         method: 'PUT',
         headers: {
@@ -139,7 +139,7 @@ const ProductionQualityHub = () => {
   const handleDowntimeSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/downtime`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -157,7 +157,7 @@ const ProductionQualityHub = () => {
     if (!explosionInput.qty || explosionInput.qty <= 0) return alert('Please enter a valid Target Qty to calculate.');
     setIsSimulating(true);
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const response = await fetch(`${API_URL}/simulation/explode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -177,7 +177,7 @@ const ProductionQualityHub = () => {
   const handleQcSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/production/qc`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

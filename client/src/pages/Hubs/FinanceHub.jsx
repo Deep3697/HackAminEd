@@ -15,7 +15,7 @@ const AdminFinanceView = ({ user, token }) => {
 
   const fetchData = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/finance/admin`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -33,7 +33,7 @@ const AdminFinanceView = ({ user, token }) => {
   const handleJournalSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
       const res = await fetch(`${API_URL}/finance/journal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -135,7 +135,7 @@ const ContractorFinanceView = ({ user, token }) => {
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
         const res = await fetch(`${API_URL}/finance/contractor`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok) setInvoices(data.invoices || []);
@@ -180,7 +180,7 @@ const CustomerFinanceView = ({ user, token }) => {
   useEffect(() => {
     const fetchBills = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+        const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://telos-backend-y3zm.onrender.com/api';
         const res = await fetch(`${API_URL}/finance/customer`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok) setBills(data.bills || []);
